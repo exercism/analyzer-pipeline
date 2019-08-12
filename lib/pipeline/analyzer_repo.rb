@@ -1,3 +1,5 @@
+require 'pp'
+
 class Pipeline::AnalyzerRepo
 
   BASE_DIR = ENV.fetch("ANALYZER_REPO_BASE_DIR", "./tmp/repos")
@@ -13,12 +15,9 @@ class Pipeline::AnalyzerRepo
     repo.fetch('origin')
   end
 
-  def head
-    head_commit.oid
-  end
-
   def checkout(ref)
-    repo.checkout(ref)
+    ref_pointer = repo.checkout(ref)
+    return ref_pointer.target.target.oid
   end
 
   def workdir

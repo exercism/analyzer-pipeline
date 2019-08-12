@@ -1,11 +1,12 @@
 class Pipeline::AnalyzerBuild
   include Mandate
 
-  attr_accessor :img
+  attr_accessor :img, :target_sha, :build_tag
 
   initialize_with :track_slug
 
   def call
+    @build_tag = "master"
     @img = File.expand_path "./opt/img"
     repo.fetch!
     checkout
@@ -17,16 +18,14 @@ class Pipeline::AnalyzerBuild
     logout
   end
 
-
-
   def checkout
-    repo.checkout("master")
+    @target_sha = repo.checkout(build_tag)
   end
 
   def build
     opt_dir = File.expand_path "./opt"
     Dir.chdir(repo.workdir) do
-      cmd = "#{build_cmd} -t #{current_tag} ."
+      cmd = "#{build_cmd} -t #{local_tag} ."
       exec_cmd cmd
     end
   end
@@ -44,13 +43,15 @@ class Pipeline::AnalyzerBuild
   end
 
   def tag_build
-    # exec_cmd "#{img} tag #{current_tag} #{registry_endpoint}/#{current_tag}"
-    # exec_cmd "#{img} tag #{current_tag} #{registry_endpoint}/#{slug}:latest"
+    exec_cmd "#{tag_cmd} #{local_tag} #{remote_tag}"
+    exec_cmd "#{tag_cmd} #{local_tag} #{remote_human_tag}"
+    exec_cmd "#{tag_cmd} #{local_tag} #{remote_latest_tag}"
   end
 
   def push_build
-    exec_cmd "#{push_cmd} #{current_tag}"
-    # exec_cmd "#{img} push #{registry_endpoint}/#{slug}:latest"
+    exec_cmd "#{push_cmd} #{remote_tag}"
+    exec_cmd "#{push_cmd} #{remote_human_tag}"
+    exec_cmd "#{push_cmd} #{remote_latest_tag}"
   end
 
   def push_cmd
@@ -61,6 +62,10 @@ class Pipeline::AnalyzerBuild
     "#{img} build -state /tmp/state-img"
   end
 
+  def tag_cmd
+    "#{img} tag -state /tmp/state-img"
+  end
+
   def exec_cmd(cmd)
     puts "> #{cmd}"
     puts "------------------------------------------------------------"
@@ -68,8 +73,20 @@ class Pipeline::AnalyzerBuild
     raise "Failed #{cmd}" unless success
   end
 
-  def current_tag
-    "#{registry_endpoint}/#{slug}:abc"
+  def local_tag
+    "#{slug}:#{target_sha}"
+  end
+
+  def remote_tag
+    "#{registry_endpoint}/#{slug}:#{target_sha}"
+  end
+
+  def remote_human_tag
+    "#{registry_endpoint}/#{slug}:#{build_tag}"
+  end
+
+  def remote_latest_tag
+    "#{registry_endpoint}/#{slug}:latest"
   end
 
   def registry_endpoint
