@@ -29,10 +29,14 @@ GEM
       concurrent-ruby (~> 1.0)
     jmespath (1.4.0)
     mandate (0.2.0)
+    metaclass (0.0.4)
     minitest (5.11.3)
+    mocha (1.9.0)
+      metaclass (~> 0.0.1)
     propono (2.1.0)
       aws-sdk-sns
       aws-sdk-sqs
+    rake (12.3.3)
     rugged (0.28.2)
     thread_safe (0.3.6)
     tzinfo (1.2.5)
@@ -45,7 +49,10 @@ DEPENDENCIES
   activesupport
   aws-sdk-ecr
   mandate
+  minitest
+  mocha
   propono
+  rake
   rugged
 
 BUNDLED WITH
