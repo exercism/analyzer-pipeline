@@ -100,7 +100,7 @@ module Pipeline::Util
     end
 
     def test_build_config_has_correct_invocation
-      configurator.invoke_analyser_for("two-fer")
+      configurator.invoke_analyzer_for("two-fer")
 
       config = configurator.build
       refute config.nil?
