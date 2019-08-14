@@ -1,11 +1,12 @@
 module Pipeline::Util
   class RuncConfigurator
-    attr_accessor :uid_id, :gid_id, :invocation_args
+    attr_accessor :uid_id, :gid_id, :invocation_args, :interactive
 
     def seed_from_env
       @uid_id = `id -u`.chomp
       @gid_id = `id -g`.chomp
       @invocation_args = []
+      @interactive = false
     end
 
     def build
@@ -13,7 +14,6 @@ module Pipeline::Util
       {
         "ociVersion": "1.0.1-dev",
         "process": {
-          "terminal": false,
           "user": {
             "uid": 0,
             "gid": 0
@@ -165,12 +165,24 @@ module Pipeline::Util
       }
       EOS
       parsed = JSON.parse(config)
+      parsed["process"]["terminal"] = interactive
       parsed["process"]["args"] = invocation_args
       parsed
     end
 
     def invoke_analyser_for(track_slug)
+      @interactive = false
       @invocation_args = ["bin/analyze.sh", track_slug, "/mnt/exercism-iteration/"]
+    end
+
+    def setup_for_terminal_access
+      @interactive = true
+      @invocation_args = ["/bin/bash"]
+    end
+
+    def setup_bash_script(script_path)
+      @interactive = false
+      @invocation_args = ["/bin/bash", script_path]
     end
 
   end

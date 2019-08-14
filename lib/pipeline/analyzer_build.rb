@@ -32,7 +32,7 @@ class Pipeline::AnalyzerBuild
   end
 
   def validate
-    Pipeline::ValidateBuild.(local_tag)
+    Pipeline::ValidateBuild.(track_slug, local_tag)
   end
 
   def login_to_repository

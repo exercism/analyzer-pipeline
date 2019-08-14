@@ -113,5 +113,28 @@ module Pipeline::Util
       assert_equal expected_args, config["process"]["args"]
     end
 
+    def test_build_config_for_terminal_access
+      configurator.setup_for_terminal_access
+
+      config = configurator.build
+      refute config.nil?
+
+      assert_equal true,            config["process"]["terminal"]
+      assert_equal "/opt/analyzer", config["process"]["cwd"]
+      assert_equal ["/bin/bash"],   config["process"]["args"]
+    end
+
+    def test_build_config_for_test_scripting
+      configurator.setup_bash_script("/opt/my_script.sh")
+
+      config = configurator.build
+      refute config.nil?
+
+      expected_args = ["/bin/bash", "/opt/my_script.sh"]
+
+      assert_equal false,            config["process"]["terminal"]
+      assert_equal expected_args,   config["process"]["args"]
+    end
+
   end
 end
