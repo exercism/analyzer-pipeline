@@ -21,7 +21,12 @@ end
 
 require "pipeline/analyzer_repo"
 require "pipeline/analyzer_build"
+require "pipeline/validation/check_invokable"
+require "pipeline/validation/check_environment_invariants"
+require "pipeline/validation/check_fixtures"
 require "pipeline/validate_build"
+require "pipeline/util/container_driver"
 require "pipeline/util/runc_configurator"
 require "pipeline/util/img_wrapper"
+require "pipeline/util/runc_wrapper"
 require "pipeline/build_image"
