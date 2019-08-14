@@ -8,7 +8,6 @@ class Pipeline::ValidateBuild
   def call
     @img = File.expand_path "./opt/img"
     @runc = File.expand_path "./opt/runc"
-    puts "[x] #{build_tag}"
     FileUtils.mkdir_p workdir
     unpack
     write_runc_config
@@ -80,14 +79,18 @@ class Pipeline::ValidateBuild
   end
 
   def check_sample_solutions
-    analysis = validate_status("two-fer", "example1")
-    analysis = validate_status("two-fer", "example2")
+    exercise_folders = Dir.glob("fixtures/#{track_slug}/*")
+    exercise_folders.each do |exercise_folder|
+      exercise_slug = exercise_folder.split("/").last
+      Dir.glob("#{exercise_folder}/*").each do |fixture_folder|
+        validate_status(exercise_slug, fixture_folder)
+      end
+    end
   end
 
-  def validate_status(exercise, slug)
-    fixture = "fixtures/#{track_slug}/#{exercise}/#{slug}/"
+  def validate_status(exercise, fixture_folder)
     FileUtils.rm_rf("#{workdir}/iteration/")
-    FileUtils.cp_r "#{fixture}/iteration", "#{workdir}/iteration"
+    FileUtils.cp_r "#{fixture_folder}/iteration", "#{workdir}/iteration"
 
     configurator.invoke_analyzer_for(exercise)
     File.write("#{workdir}/analyzer_config.json", configurator.build.to_json)
@@ -98,11 +101,13 @@ class Pipeline::ValidateBuild
     end
 
     analysis = JSON.parse(File.read("#{workdir}/iteration/analysis.json"))
-    expected = JSON.parse(File.read("#{fixture}/expected_analysis.json"))
+    expected = JSON.parse(File.read("#{fixture_folder}/expected_analysis.json"))
 
     raise "Incorrect expected_status" if expected["status"].nil?
-    raise "Incorrect status when validating #{fixture}" if expected["status"] != analysis["status"]
-    raise "Incorrect comments when validating #{fixture}" if expected["comments"].sort != analysis["comments"].sort
+    raise "Incorrect status when validating #{fixture_folder}" if expected["status"] != analysis["status"]
+    expected["comments"] ||= []
+    analysis["comments"] ||= []
+    raise "Incorrect comments when validating #{fixture_folder}" if expected["comments"].sort != analysis["comments"].sort
   end
 
   memoize
@@ -137,7 +142,7 @@ class Pipeline::ValidateBuild
     configurator.setup_for_terminal_access
     File.write("#{workdir}/terminal_config.json", configurator.build.to_json)
 
-    configurator.setup_bash_script("/mnt/exercism-iteration/test_script.sh")
+    configurator.setup_script("/mnt/exercism-iteration/test_script.sh")
     File.write("#{workdir}/test_config.json", configurator.build.to_json)
   end
 

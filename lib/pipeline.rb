@@ -12,7 +12,9 @@ Aws.config.update({
 module Pipeline
   def self.spike
     puts "OK"
-    AnalyzerBuild.("ruby")
+    # AnalyzerBuild.("ruby")
+    repo = Pipeline::AnalyzerRepo.new("/home/ccare/code/exercism/sample-analyzer")
+    repo.fetch!
     puts "DONE"
   end
 end
@@ -21,3 +23,5 @@ require "pipeline/analyzer_repo"
 require "pipeline/analyzer_build"
 require "pipeline/validate_build"
 require "pipeline/util/runc_configurator"
+require "pipeline/util/img_wrapper"
+require "pipeline/build_image"

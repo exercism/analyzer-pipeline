@@ -16,12 +16,12 @@ module Pipeline::Util
 
     def setup_for_terminal_access
       @interactive = true
-      @invocation_args = ["/bin/bash"]
+      @invocation_args = ["/bin/sh"]
     end
 
-    def setup_bash_script(script_path)
+    def setup_script(script_path)
       @interactive = false
-      @invocation_args = ["/bin/bash", script_path]
+      @invocation_args = ["/bin/sh", script_path]
     end
 
     def build
