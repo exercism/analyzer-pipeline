@@ -19,3 +19,4 @@ end
 
 require "pipeline/analyzer_repo"
 require "pipeline/analyzer_build"
+require "pipeline/validate_build"

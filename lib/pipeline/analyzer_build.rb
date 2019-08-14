@@ -11,6 +11,8 @@ class Pipeline::AnalyzerBuild
     repo.fetch!
     checkout
     build
+    validate
+    return
     puts "login"
     login_to_repository
     tag_build
@@ -23,11 +25,14 @@ class Pipeline::AnalyzerBuild
   end
 
   def build
-    opt_dir = File.expand_path "./opt"
     Dir.chdir(repo.workdir) do
       cmd = "#{build_cmd} -t #{local_tag} ."
       exec_cmd cmd
     end
+  end
+
+  def validate
+    Pipeline::ValidateBuild.(local_tag)
   end
 
   def login_to_repository
