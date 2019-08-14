@@ -9,7 +9,7 @@ module Pipeline::Util
       @interactive = false
     end
 
-    def invoke_analyser_for(track_slug)
+    def invoke_analyzer_for(track_slug)
       @interactive = false
       @invocation_args = ["bin/analyze.sh", track_slug, "/mnt/exercism-iteration/"]
     end

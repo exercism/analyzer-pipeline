@@ -89,7 +89,7 @@ class Pipeline::ValidateBuild
     FileUtils.rm_rf("#{workdir}/iteration/")
     FileUtils.cp_r "#{fixture}/iteration", "#{workdir}/iteration"
 
-    configurator.invoke_analyser_for(exercise)
+    configurator.invoke_analyzer_for(exercise)
     File.write("#{workdir}/analyzer_config.json", configurator.build.to_json)
     FileUtils.symlink("#{workdir}/analyzer_config.json", "#{workdir}/config.json", force: true)
 
