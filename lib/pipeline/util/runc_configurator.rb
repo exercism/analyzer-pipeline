@@ -9,6 +9,21 @@ module Pipeline::Util
       @interactive = false
     end
 
+    def invoke_analyser_for(track_slug)
+      @interactive = false
+      @invocation_args = ["bin/analyze.sh", track_slug, "/mnt/exercism-iteration/"]
+    end
+
+    def setup_for_terminal_access
+      @interactive = true
+      @invocation_args = ["/bin/bash"]
+    end
+
+    def setup_bash_script(script_path)
+      @interactive = false
+      @invocation_args = ["/bin/bash", script_path]
+    end
+
     def build
       config = <<-EOS
       {
@@ -168,21 +183,6 @@ module Pipeline::Util
       parsed["process"]["terminal"] = interactive
       parsed["process"]["args"] = invocation_args
       parsed
-    end
-
-    def invoke_analyser_for(track_slug)
-      @interactive = false
-      @invocation_args = ["bin/analyze.sh", track_slug, "/mnt/exercism-iteration/"]
-    end
-
-    def setup_for_terminal_access
-      @interactive = true
-      @invocation_args = ["/bin/bash"]
-    end
-
-    def setup_bash_script(script_path)
-      @interactive = false
-      @invocation_args = ["/bin/bash", script_path]
     end
 
   end
