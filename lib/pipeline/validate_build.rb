@@ -1,7 +1,7 @@
 class Pipeline::ValidateBuild
   include Mandate
 
-  initialize_with :track_slug, :build_tag
+  initialize_with :build_tag, :fixtures_folder
 
   def call
     unpack
@@ -24,7 +24,7 @@ class Pipeline::ValidateBuild
   end
 
   def check_sample_solutions
-    Pipeline::Validation::CheckFixtures.(container_driver, track_slug)
+    Pipeline::Validation::CheckFixtures.(container_driver, fixtures_folder)
   end
 
   memoize

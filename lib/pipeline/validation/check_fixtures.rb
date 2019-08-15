@@ -2,11 +2,11 @@ module Pipeline::Validation
   class CheckFixtures
     include Mandate
 
-    initialize_with :container_driver, :track_slug
+    initialize_with :container_driver, :fixtures_folder
 
     def call
       clean_and_setup
-      exercise_folders = Dir.glob("fixtures/#{track_slug}/*")
+      exercise_folders = Dir.glob("#{fixtures_folder}/*")
       exercise_folders.each do |exercise_folder|
         exercise_slug = exercise_folder.split("/").last
         Dir.glob("#{exercise_folder}/*").each do |fixture_folder|

@@ -17,7 +17,7 @@ module Pipeline
 
       puts image_tag
 
-      Pipeline::ValidateBuild.(track_slug, image_tag)
+      Pipeline::ValidateBuild.(image_tag, "fixtures/#{track_slug}")
     end
 
   end
