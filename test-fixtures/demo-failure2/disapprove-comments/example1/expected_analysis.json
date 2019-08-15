@@ -1,0 +1,9 @@
+{
+  "status": "disapprove",
+  "comments": [
+    {
+      "comment": "demo.sample.comment",
+      "params": { "p1": "hello world" }
+    }
+  ]
+}

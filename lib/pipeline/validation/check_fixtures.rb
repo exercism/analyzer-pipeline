@@ -5,7 +5,6 @@ module Pipeline::Validation
     initialize_with :container_driver, :fixtures_folder
 
     def call
-      clean_and_setup
       exercise_folders = Dir.glob("#{fixtures_folder}/*")
       exercise_folders.each do |exercise_folder|
         exercise_slug = exercise_folder.split("/").last
@@ -15,11 +14,8 @@ module Pipeline::Validation
       end
     end
 
-    def clean_and_setup
-      FileUtils.rm_rf("#{workdir}/iteration/")
-    end
-
     def validate_status(exercise, fixture_folder)
+      FileUtils.rm_rf("#{workdir}/iteration/")
       FileUtils.cp_r "#{fixture_folder}/iteration", "#{workdir}/iteration"
 
       container_driver.run_analyzer_for(exercise)
@@ -28,10 +24,20 @@ module Pipeline::Validation
       expected = JSON.parse(File.read("#{fixture_folder}/expected_analysis.json"))
 
       raise "Incorrect expected_status" if expected["status"].nil?
-      raise "Incorrect status when validating #{fixture_folder}" if expected["status"] != analysis["status"]
+
+      if expected["status"] != analysis["status"]
+        mismatch = "<#{analysis["status"]}> not <#{expected["status"]}>"
+        msg = "Incorrect status (#{mismatch}) when validating #{fixture_folder}"
+        err = FixtureCheckError.new(msg)
+        raise err
+      end
       expected["comments"] ||= []
       analysis["comments"] ||= []
-      raise "Incorrect comments when validating #{fixture_folder}" if expected["comments"].sort != analysis["comments"].sort
+      if expected["comments"].sort != analysis["comments"].sort
+        msg = "Incorrect comments when validating #{fixture_folder}."
+        msg += " Got: " + analysis["comments"].to_json
+        raise FixtureCheckError.new(msg)
+      end
     end
 
     def workdir

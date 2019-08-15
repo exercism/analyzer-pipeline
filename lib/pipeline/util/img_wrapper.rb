@@ -1,5 +1,6 @@
 module Pipeline::Util
   class ImgWrapper
+
     attr_accessor :binary_path, :state_location, :suppress_output
 
     def initialize
@@ -15,6 +16,22 @@ module Pipeline::Util
 
     def unpack(local_tag)
       exec_cmd "#{binary_path} unpack -state #{state_location} #{local_tag}"
+    end
+
+    def login(user, password, registry_endpoint)
+      exec_cmd "#{binary_path} login -u #{user} -p \"#{password}\" #{registry_endpoint}"
+    end
+
+    def logout(registry_endpoint)
+      exec_cmd "#{binary_path} logout #{registry_endpoint}"
+    end
+
+    def tag(image, new_tag)
+      exec_cmd "#{tag_cmd} #{image} #{new_tag}"
+    end
+
+    def push(remote_tag)
+      exec_cmd "#{push_cmd} #{remote_tag}"
     end
 
     def push_cmd

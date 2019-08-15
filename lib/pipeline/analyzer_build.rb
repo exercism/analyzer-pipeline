@@ -1,104 +1,35 @@
 class Pipeline::AnalyzerBuild
   include Mandate
 
-  attr_accessor :img, :target_sha, :build_tag
+  attr_accessor :img, :runc, :target_sha, :build_tag, :image_tag
 
   initialize_with :track_slug
 
   def call
-    @build_tag = "master"
-    @img = File.expand_path "./opt/img"
-    repo.fetch!
-    checkout
+    setup_utiliies
     build
     validate
-    return
-    puts "login"
-    login_to_repository
-    tag_build
-    push_build
-    logout
+    publish
   end
 
-  def checkout
-    @target_sha = repo.checkout(build_tag)
+  def setup_utiliies
+    @img = Pipeline::Util::ImgWrapper.new
   end
 
   def build
-    Dir.chdir(repo.workdir) do
-      cmd = "#{build_cmd} -t #{local_tag} ."
-      exec_cmd cmd
-    end
+    @build_tag = "master"
+    @image_tag = Pipeline::BuildImage.(build_tag, image_name, repo, img)
   end
 
   def validate
-    Pipeline::ValidateBuild.(track_slug, local_tag)
+    Pipeline::ValidateBuild.(image_tag, "fixtures/#{track_slug}")
   end
 
-  def login_to_repository
-    ecr = Aws::ECR::Client.new(region: 'eu-west-1')
-    authorization_token = ecr.get_authorization_token.authorization_data[0].authorization_token
-    plain = Base64.decode64(authorization_token)
-    user,password = plain.split(":")
-    exec_cmd "#{img} login -u AWS -p \"#{password}\" #{registry_endpoint}"
+  def publish
+    Pipeline::PublishImage.(img, image_name, image_tag, build_tag)
   end
 
-  def logout
-    exec_cmd "#{img} logout #{registry_endpoint}"
-  end
-
-  def tag_build
-    exec_cmd "#{tag_cmd} #{local_tag} #{remote_tag}"
-    exec_cmd "#{tag_cmd} #{local_tag} #{remote_human_tag}"
-    exec_cmd "#{tag_cmd} #{local_tag} #{remote_latest_tag}"
-  end
-
-  def push_build
-    exec_cmd "#{push_cmd} #{remote_tag}"
-    exec_cmd "#{push_cmd} #{remote_human_tag}"
-    exec_cmd "#{push_cmd} #{remote_latest_tag}"
-  end
-
-  def push_cmd
-    "#{img} push -state /tmp/state-img"
-  end
-
-  def build_cmd
-    "#{img} build -state /tmp/state-img"
-  end
-
-  def tag_cmd
-    "#{img} tag -state /tmp/state-img"
-  end
-
-  def exec_cmd(cmd)
-    puts "> #{cmd}"
-    puts "------------------------------------------------------------"
-    success = system({}, cmd)
-    raise "Failed #{cmd}" unless success
-  end
-
-  def local_tag
-    "#{slug}:#{target_sha}"
-  end
-
-  def remote_tag
-    "#{registry_endpoint}/#{slug}:#{target_sha}"
-  end
-
-  def remote_human_tag
-    "#{registry_endpoint}/#{slug}:#{build_tag}"
-  end
-
-  def remote_latest_tag
-    "#{registry_endpoint}/#{slug}:latest"
-  end
-
-  def registry_endpoint
-    "681735686245.dkr.ecr.eu-west-1.amazonaws.com"
-  end
-
-  def slug
+  def image_name
     "#{track_slug}-analyzer-dev"
   end
 

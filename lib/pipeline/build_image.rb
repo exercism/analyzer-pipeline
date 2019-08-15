@@ -1,12 +1,11 @@
 class Pipeline::BuildImage
   include Mandate
 
-  attr_accessor :target_sha, :build_tag
+  attr_accessor :target_sha
 
-  initialize_with :track_slug, :repo, :img
+  initialize_with :build_tag, :image_slug, :repo, :img
 
   def call
-    @build_tag = "master"
     repo.fetch!
     checkout
     build
@@ -24,10 +23,6 @@ class Pipeline::BuildImage
   end
 
   def local_tag
-    "#{slug}:#{target_sha}"
-  end
-
-  def slug
-    "#{track_slug}-analyzer-dev"
+    "#{image_slug}:#{target_sha}"
   end
 end
