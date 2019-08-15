@@ -24,10 +24,6 @@ class Pipeline::PublishImage
     img.logout(registry_endpoint)
   end
 
-  def registry_endpoint
-    "681735686245.dkr.ecr.eu-west-1.amazonaws.com"
-  end
-
   def tag_build
     img.tag(image_tag, remote_tag)
     img.tag(image_tag, remote_human_tag) unless build_tag.nil?
@@ -53,12 +49,7 @@ class Pipeline::PublishImage
   end
 
   def registry_endpoint
-    "681735686245.dkr.ecr.eu-west-1.amazonaws.com"
+    Pipeline.config["registry_endpoint"]
   end
-
-  def slug
-    image_tag
-  end
-
 
 end

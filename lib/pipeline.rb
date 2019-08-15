@@ -4,18 +4,24 @@ require "active_support"
 require 'securerandom'
 require 'rugged'
 require 'aws-sdk-ecr'
-
-Aws.config.update({
-   credentials: Aws::Credentials.new('AKIAZ5OU5BBSQDMMFQ7J', '+Q2fMSju+dJljn6G2XFZOt6vUHgSF56P736yPQhj')
-})
+require 'yaml'
 
 module Pipeline
-  def self.spike
-    puts "OK"
-    AnalyzerBuild.("ruby")
-    # repo = Pipeline::AnalyzerRepo.new("/home/ccare/code/exercism/sample-analyzer")
-    # repo.fetch!
-    puts "DONE"
+
+  def self.load_config(config_path)
+    config = YAML.load(File.read(config_path))
+    Aws.config.update({
+       credentials: Aws::Credentials.new(config["aws_access_key_id"], config["aws_secret_access_key"])
+    })
+    @config = config
+  end
+
+  def self.config
+    @config
+  end
+
+  def self.build_analyzer(track_slug)
+    AnalyzerBuild.(track_slug)
   end
 end
 

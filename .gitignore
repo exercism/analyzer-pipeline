@@ -1,4 +1,5 @@
 *.swp
+config/pipeline.yml
 .DS_Store
 tmp/*
 opt/

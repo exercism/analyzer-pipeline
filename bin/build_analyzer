@@ -3,5 +3,5 @@ require "bundler/setup"
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
 require "pipeline"
-
-Pipeline.spike
+Pipeline.load_config(File.expand_path('../../config/pipeline.yml', __FILE__))
+Pipeline.build_analyzer(ARGV[0])

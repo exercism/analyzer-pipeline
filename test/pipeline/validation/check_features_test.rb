@@ -8,7 +8,7 @@ module Pipeline::Validation
 
     def setup
       track_slug = "demo"
-      demo_analyzer_repo = "/home/ccare/code/exercism/sample-analyzer"
+      demo_analyzer_repo = "https://github.com/exercism/stub-analyzer.git"
       repo = Pipeline::AnalyzerRepo.new(demo_analyzer_repo)
       workdir = "/tmp/analyzer-scratch/#{SecureRandom.uuid}"
 
