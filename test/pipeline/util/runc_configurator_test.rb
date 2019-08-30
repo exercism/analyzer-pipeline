@@ -72,7 +72,7 @@ module Pipeline::Util
       assert_equal [ "rbind", "rw" ], mount["options"]
     end
 
-    def test_build_config_has_correct_custom_mounts
+    def test_build_config_has_correct_ids
       config = configurator.build
       refute config.nil?
 
@@ -83,20 +83,6 @@ module Pipeline::Util
       assert_equal 0,   config["linux"]["gidMappings"][0]["containerID"]
       assert_equal 999, config["linux"]["gidMappings"][0]["hostID"]
       assert_equal 1,   config["linux"]["gidMappings"][0]["size"]
-    end
-
-    def test_build_config_has_correct_invocation
-      configurator.invoke_analyzer_for("two-fer")
-
-      config = configurator.build
-      refute config.nil?
-
-      assert_equal false,           config["process"]["terminal"]
-      assert_equal "/opt/analyzer", config["process"]["cwd"]
-
-      expected_args = ["bin/analyze.sh", "two-fer", "/mnt/exercism-iteration/"]
-
-      assert_equal expected_args, config["process"]["args"]
     end
 
     def test_build_config_has_correct_invocation

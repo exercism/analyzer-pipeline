@@ -9,38 +9,6 @@ module Pipeline::Util
       @img.binary_path = "/path/to/img"
     end
 
-    def test_default_push_cmd
-      assert_equal "/path/to/img push -state /tmp/state-img", @img.push_cmd
-    end
-
-    def test_default_build_cmd
-      assert_equal "/path/to/img build -state /tmp/state-img", @img.build_cmd
-    end
-
-    def test_default_tag_cmd
-      assert_equal "/path/to/img tag -state /tmp/state-img", @img.tag_cmd
-    end
-
-    def test_push_cmd_with_custom_state
-      @img.state_location = "/my/state"
-      assert_equal "/path/to/img push -state /my/state", @img.push_cmd
-    end
-
-    def test_build_cmd
-      @img.state_location = "/my/state"
-      assert_equal "/path/to/img build -state /my/state", @img.build_cmd
-    end
-
-    def test_tag_cmd
-      @img.state_location = "/my/state"
-      assert_equal "/path/to/img tag -state /my/state", @img.tag_cmd
-    end
-
-    def test_push_cmd
-      @img.state_location = "/my/state"
-      assert_equal "/path/to/img tag -state /my/state", @img.tag_cmd
-    end
-
     def test_login
       @img.expects(:exec_cmd).with("/path/to/img login -u demo -p \"password\" localhost:9999")
       @img.login("demo", "password", "localhost:9999")
@@ -64,6 +32,26 @@ module Pipeline::Util
     def test_tag
       @img.expects(:exec_cmd).with("/path/to/img tag -state /tmp/state-img local_tag additional_tag")
       @img.tag("local_tag", "additional_tag")
+    end
+
+    def test_push_cmd_with_custom_state
+      @img.state_location = "/my/state"
+      assert_equal "/path/to/img push -state /my/state", @img.push_cmd
+    end
+
+    def test_build_cmd
+      @img.state_location = "/my/state"
+      assert_equal "/path/to/img build -state /my/state", @img.build_cmd
+    end
+
+    def test_tag_cmd
+      @img.state_location = "/my/state"
+      assert_equal "/path/to/img tag -state /my/state", @img.tag_cmd
+    end
+
+    def test_push_cmd
+      @img.state_location = "/my/state"
+      assert_equal "/path/to/img tag -state /my/state", @img.tag_cmd
     end
 
     def test_exec_build

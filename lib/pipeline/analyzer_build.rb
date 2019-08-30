@@ -1,18 +1,18 @@
 class Pipeline::AnalyzerBuild
   include Mandate
 
-  attr_accessor :img, :runc, :target_sha, :build_tag, :image_tag
+  attr_accessor :img, :target_sha, :build_tag, :image_tag
 
   initialize_with :track_slug
 
   def call
-    setup_utiliies
+    setup_utilities
     build
     validate
     publish
   end
 
-  def setup_utiliies
+  def setup_utilities
     @img = Pipeline::Util::ImgWrapper.new
   end
 
@@ -30,10 +30,12 @@ class Pipeline::AnalyzerBuild
   end
 
   def image_name
-    "#{track_slug}-analyzer-dev"
+    suffix = "-dev" unless ENV["env"] == "production"
+    "#{track_slug}-analyzer#{suffix}"
   end
 
   memoize
+
   def repo
     repo_url = "https://github.com/exercism/#{track_slug}-analyzer"
     Pipeline::AnalyzerRepo.new(repo_url)
