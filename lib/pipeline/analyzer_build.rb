@@ -7,6 +7,7 @@ class Pipeline::AnalyzerBuild
 
   def call
     setup_utilities
+    check_tag_exists
     build
     validate
     publish
@@ -14,6 +15,11 @@ class Pipeline::AnalyzerBuild
 
   def setup_utilities
     @img = Pipeline::Util::ImgWrapper.new
+  end
+
+  def check_tag_exists
+    return if build_tag == "master"
+    raise "Build tag does not exist" unless repo.tags[build_tag]
   end
 
   def build

@@ -23,6 +23,13 @@ module Pipeline
   def self.build_analyzer(track_slug)
     AnalyzerBuild.("master", track_slug)
   end
+
+  def self.scratch
+    track_slug = "rust"
+    repo_url = "https://github.com/exercism/#{track_slug}-analyzer"
+    repo = Pipeline::AnalyzerRepo.new(repo_url)
+    puts repo.tags
+  end
 end
 
 require "pipeline/analyzer_repo"

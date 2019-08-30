@@ -24,6 +24,15 @@ class Pipeline::AnalyzerRepo
     repo.workdir
   end
 
+  def tags
+    return @tags if @tags
+    @tags = {}
+    repo.tags.each do |tag|
+      @tags[tag.name] = tag.target.oid
+    end
+    @tags
+  end
+
   private
 
   def repo

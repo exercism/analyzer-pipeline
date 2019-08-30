@@ -10,11 +10,31 @@ module Pipeline
 
     def test_call_invokes_each_phase
       @cmd.expects(:setup_utilities)
+      @cmd.expects(:check_tag_exists)
       @cmd.expects(:build)
       @cmd.expects(:validate)
       @cmd.expects(:publish)
-
       @cmd.call()
+    end
+
+    def test_check_tag_permits_master_branch
+      @cmd = AnalyzerBuild.new("master", "demotrack")
+      @cmd.expects(:repo).never
+      @cmd.check_tag_exists
+    end
+
+    def test_check_tag_exists
+      stub_repo = stub(tags: {"v0.1.1" => "abcdef"})
+      @cmd.expects(:repo).returns(stub_repo)
+      @cmd.check_tag_exists
+    end
+
+    def test_check_tag_raises_if_tag_doesnt_exists
+      stub_repo = stub(tags: {})
+      @cmd.expects(:repo).returns(stub_repo)
+      assert_raises(RuntimeError) do
+        @cmd.check_tag_exists
+      end
     end
 
     def test_setup_utilities
