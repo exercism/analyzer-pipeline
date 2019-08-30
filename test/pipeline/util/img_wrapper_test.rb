@@ -9,15 +9,15 @@ module Pipeline::Util
       @img.binary_path = "/path/to/img"
     end
 
-    def test_push_cmd
+    def test_default_push_cmd
       assert_equal "/path/to/img push -state /tmp/state-img", @img.push_cmd
     end
 
-    def test_build_cmd
+    def test_default_build_cmd
       assert_equal "/path/to/img build -state /tmp/state-img", @img.build_cmd
     end
 
-    def test_tag_cmd
+    def test_default_tag_cmd
       assert_equal "/path/to/img tag -state /tmp/state-img", @img.tag_cmd
     end
 
@@ -34,6 +34,36 @@ module Pipeline::Util
     def test_tag_cmd
       @img.state_location = "/my/state"
       assert_equal "/path/to/img tag -state /my/state", @img.tag_cmd
+    end
+
+    def test_push_cmd
+      @img.state_location = "/my/state"
+      assert_equal "/path/to/img tag -state /my/state", @img.tag_cmd
+    end
+
+    def test_login
+      @img.expects(:exec_cmd).with("/path/to/img login -u demo -p \"password\" localhost:9999")
+      @img.login("demo", "password", "localhost:9999")
+    end
+
+    def test_logout
+      @img.expects(:exec_cmd).with("/path/to/img logout localhost:9999")
+      @img.logout("localhost:9999")
+    end
+
+    def test_push
+      @img.expects(:exec_cmd).with("/path/to/img push -state /tmp/state-img dummy_remote_tag")
+      @img.push("dummy_remote_tag")
+    end
+
+    def test_unpack
+      @img.expects(:exec_cmd).with("/path/to/img unpack -state /tmp/state-img local_tag")
+      @img.unpack("local_tag")
+    end
+
+    def test_tag
+      @img.expects(:exec_cmd).with("/path/to/img tag -state /tmp/state-img local_tag additional_tag")
+      @img.tag("local_tag", "additional_tag")
     end
 
     def test_exec_build

@@ -38,10 +38,6 @@ module Pipeline::Util
       "#{binary_path} push -state #{state_location}"
     end
 
-    def push_cmd
-      "#{binary_path} push -state #{state_location}"
-    end
-
     def build_cmd
       "#{binary_path} build -state #{state_location}"
     end
