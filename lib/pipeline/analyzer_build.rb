@@ -42,7 +42,6 @@ class Pipeline::AnalyzerBuild
   memoize
 
   def repo
-    repo_url = "https://github.com/exercism/#{track_slug}-analyzer"
-    Pipeline::AnalyzerRepo.new(repo_url)
+    Pipeline::AnalyzerRepo.for_track(track_slug)
   end
 end
