@@ -21,7 +21,7 @@ module Pipeline
   end
 
   def self.build_analyzer(track_slug)
-    AnalyzerBuild.(track_slug)
+    AnalyzerBuild.("master", track_slug)
   end
 end
 

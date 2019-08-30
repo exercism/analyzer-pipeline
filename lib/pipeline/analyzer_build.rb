@@ -1,9 +1,9 @@
 class Pipeline::AnalyzerBuild
   include Mandate
 
-  attr_accessor :img, :target_sha, :build_tag, :image_tag
+  attr_accessor :img, :target_sha, :image_tag
 
-  initialize_with :track_slug
+  initialize_with :build_tag, :track_slug
 
   def call
     setup_utilities
@@ -17,7 +17,6 @@ class Pipeline::AnalyzerBuild
   end
 
   def build
-    @build_tag = "master"
     @image_tag = Pipeline::BuildImage.(build_tag, image_name, repo, img)
   end
 

@@ -5,7 +5,7 @@ module Pipeline
   class AnalyzerBuildTest < Minitest::Test
 
     def setup
-      @cmd = AnalyzerBuild.new("demotrack")
+      @cmd = AnalyzerBuild.new("v0.1.1", "demotrack")
     end
 
     def test_call_invokes_each_phase
@@ -28,7 +28,7 @@ module Pipeline
       stub_img = stub()
       @cmd.img = stub_img
       @cmd.expects(:repo).returns(stub_repo)
-      Pipeline::BuildImage.expects(:call).with("master", "demotrack-analyzer-dev", stub_repo, stub_img)
+      Pipeline::BuildImage.expects(:call).with("v0.1.1", "demotrack-analyzer-dev", stub_repo, stub_img)
       @cmd.build
     end
 
@@ -42,7 +42,6 @@ module Pipeline
       stub_img = stub()
       @cmd.img = stub_img
       @cmd.image_tag = "my_image_tag"
-      @cmd.build_tag = "v0.1.1"
       Pipeline::PublishImage.expects(:call).with(stub_img, "demotrack-analyzer-dev", "my_image_tag", "v0.1.1")
       @cmd.publish
     end
