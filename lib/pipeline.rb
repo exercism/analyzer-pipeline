@@ -26,9 +26,10 @@ module Pipeline
 
   def self.scratch
     track_slug = "rust"
-    repo_url = "https://github.com/exercism/#{track_slug}-analyzer"
-    repo = Pipeline::AnalyzerRepo.new(repo_url)
-    puts repo.tags
+    repo = Pipeline::AnalyzerRepo.for_track(track_slug)
+    latest_tag = repo.tags.keys.last
+    puts latest_tag
+    AnalyzerBuild.(latest_tag, track_slug)
   end
 end
 

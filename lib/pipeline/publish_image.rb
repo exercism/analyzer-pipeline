@@ -6,14 +6,31 @@ class Pipeline::PublishImage
   def call
     puts "PUBLISHING #{image_tag}"
     puts "Login to repo"
+    create_repository
     login_to_repository
     tag_build
     push_build
     logout
   end
 
+  def create_repository
+    puts "Checking if repository exists"
+    begin
+      ecr.describe_repositories({
+        repository_names: [image_name]
+      })
+      return
+    rescue Aws::ECR::Errors::RepositoryNotFoundException
+      puts "Repository #{image_name} not found"
+    end
+    puts "Creating repository"
+    ecr.create_repository({
+      repository_name: image_name,
+      image_tag_mutability: "MUTABLE"
+    })
+  end
+
   def login_to_repository
-    ecr = Aws::ECR::Client.new(region: 'eu-west-1')
     authorization_token = ecr.get_authorization_token.authorization_data[0].authorization_token
     plain = Base64.decode64(authorization_token)
     user,password = plain.split(":")
@@ -50,6 +67,11 @@ class Pipeline::PublishImage
 
   def registry_endpoint
     Pipeline.config["registry_endpoint"]
+  end
+
+  memoize
+  def ecr
+    Aws::ECR::Client.new(region: 'eu-west-1')
   end
 
 end

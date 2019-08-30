@@ -21,8 +21,14 @@ class Pipeline::AnalyzerRepo
   end
 
   def checkout(ref)
-    ref_pointer = repo.checkout(ref)
-    return ref_pointer.target.target.oid
+    if tags[ref]
+      oid = tags[ref]
+      repo.checkout(oid)
+      return oid
+    else
+      ref_pointer = repo.checkout(ref)
+      return ref_pointer.target.target.oid
+    end
   end
 
   def workdir
@@ -50,10 +56,6 @@ class Pipeline::AnalyzerRepo
     puts "Failed to clone repo #{repo_url}"
     puts e.message
     raise
-  end
-
-  def main_branch_ref
-    "origin/master"
   end
 
   def repo_dir_exists?
