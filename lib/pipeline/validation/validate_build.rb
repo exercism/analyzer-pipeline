@@ -1,4 +1,4 @@
-class Pipeline::ValidateBuild
+class Pipeline::Validation::ValidateBuild
   include Mandate
 
   initialize_with :build_tag, :fixtures_folder

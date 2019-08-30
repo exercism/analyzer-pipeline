@@ -17,7 +17,7 @@ module Pipeline::Validation
       configurator = Pipeline::Util::RuncConfigurator.new
       configurator.seed_from_env
 
-      image_tag = Pipeline::BuildImage.("master", track_slug, repo, img)
+      image_tag = Pipeline::Build::BuildImage.("master", track_slug, repo, img)
 
       @container_driver = Pipeline::Util::ContainerDriver.new(runc, img, configurator, workdir)
       container_driver.prepare_workdir

@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'json'
 
-module Pipeline
+module Pipeline::Build
   class AnalyzerBuildTest < Minitest::Test
 
     def setup
@@ -48,13 +48,13 @@ module Pipeline
       stub_img = stub()
       @cmd.img = stub_img
       @cmd.expects(:repo).returns(stub_repo)
-      Pipeline::BuildImage.expects(:call).with("v0.1.1", "demotrack-analyzer-dev", stub_repo, stub_img)
+      Pipeline::Build::BuildImage.expects(:call).with("v0.1.1", "demotrack-analyzer-dev", stub_repo, stub_img)
       @cmd.build
     end
 
     def test_validate_delegates_correctly
       @cmd.image_tag = "my_image_tag"
-      Pipeline::ValidateBuild.expects(:call).with("my_image_tag", "fixtures/demotrack")
+      Pipeline::Validation::ValidateBuild.expects(:call).with("my_image_tag", "fixtures/demotrack")
       @cmd.validate
     end
 
@@ -62,7 +62,7 @@ module Pipeline
       stub_img = stub()
       @cmd.img = stub_img
       @cmd.image_tag = "my_image_tag"
-      Pipeline::PublishImage.expects(:call).with(stub_img, "demotrack-analyzer-dev", "my_image_tag", "v0.1.1")
+      Pipeline::Build::PublishImage.expects(:call).with(stub_img, "demotrack-analyzer-dev", "my_image_tag", "v0.1.1")
       @cmd.publish
     end
 

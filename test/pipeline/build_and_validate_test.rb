@@ -8,8 +8,8 @@ module Pipeline
       demo_analyzer_repo = "https://github.com/exercism/stub-analyzer.git"
       repo = Pipeline::AnalyzerRepo.new(demo_analyzer_repo)
       img = Pipeline::Util::ImgWrapper.new
-      image_tag = Pipeline::BuildImage.("master", "demo", repo, img)
-      Pipeline::ValidateBuild.(image_tag, "test-fixtures/demo")
+      image_tag = Pipeline::Build::BuildImage.("master", "demo", repo, img)
+      Pipeline::Validation::ValidateBuild.(image_tag, "test-fixtures/demo")
     end
 
   end
