@@ -72,6 +72,14 @@ module Pipeline::Util
       assert_equal [ "rbind", "rw" ], mount["options"]
     end
 
+    def test_build_config_supports_rootfs_override
+      configurator.rootfs = "/absolute/path/to/another/rootfs"
+      config = configurator.build
+
+      assert_equal "/absolute/path/to/another/rootfs", config["root"]["path"]
+      assert_equal true,       config["root"]["readonly"]
+    end
+
     def test_build_config_has_correct_ids
       config = configurator.build
       refute config.nil?

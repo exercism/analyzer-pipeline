@@ -1,6 +1,10 @@
 module Pipeline::Util
   class RuncConfigurator
-    attr_accessor :uid_id, :gid_id, :invocation_args, :interactive
+    attr_accessor :uid_id, :gid_id, :invocation_args, :interactive, :rootfs
+
+    def initialize
+      @rootfs = "./rootfs"
+    end
 
     def seed_from_env
       @uid_id = `id -u`.chomp
@@ -49,7 +53,7 @@ module Pipeline::Util
           "noNewPrivileges": true
         },
         "root": {
-          "path": "./rootfs",
+          "path": "#{rootfs}",
           "readonly": true
         },
         "hostname": "exercism-runner",

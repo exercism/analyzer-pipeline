@@ -6,4 +6,5 @@ require "pipeline"
 Pipeline.load_config(File.expand_path('../../config/pipeline.yml', __FILE__))
 # Pipeline.build_analyzer(ARGV[0])
 # Pipeline.scratch
+# Pipeline.release
 Pipeline.analyzer

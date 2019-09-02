@@ -35,6 +35,7 @@ module Pipeline
   def self.release
     FileUtils.rm_rf "/tmp/analyzer-env/"
     env_base = "/tmp/analyzer-env/#{SecureRandom.hex}"
+    env_base = "/tmp/analyzer-env/1e9c733fd7502974c2a3fdd85da9c844"
     environment = Runtime::RuntimeEnvironment.new(env_base)
     environment.prepare
     img = Pipeline::Util::ImgWrapper.new
@@ -44,7 +45,11 @@ module Pipeline
   def self.analyzer
     env_base = "/tmp/analyzer-env/1e9c733fd7502974c2a3fdd85da9c844"
     environment = Runtime::RuntimeEnvironment.new(env_base)
-    environment.create_analyzer_workdir("ruby")
+    solution_dir = environment.prepare_analysis("ruby", 42)
+    iteration_folder = "#{solution_dir}/iteration"
+    File.write("#{iteration_folder}/two_fer.rb", 'puts "hello"')
+    environment.run_analysis("ruby", solution_dir, "two_fer")
+    puts File.read("#{iteration_folder}/analysis.json")
   end
 end
 

@@ -59,5 +59,41 @@ module Pipeline::Runtime
       FileUtils.mkdir_p iterations
     end
 
+    def prepare_analysis(track_slug, solution_id)
+      track_dir = "#{env_base}/#{track_slug}"
+      runs_dir = "#{track_dir}/runs"
+      current_dir = "#{track_dir}/current"
+      solution_dir = "#{runs_dir}/iteration_#{Time.now.to_i}-#{solution_id}-#{SecureRandom.hex}"
+
+      iteration_folder = "#{solution_dir}/iteration"
+      tmp_folder = "#{solution_dir}/tmp"
+
+      FileUtils.mkdir_p iteration_folder
+      FileUtils.mkdir_p tmp_folder
+      solution_dir
+    end
+
+    def run_analysis(track_slug, solution_dir, exercise_slug)
+      track_dir = "#{env_base}/#{track_slug}"
+      runs_dir = "#{track_dir}/runs"
+      current_dir = "#{track_dir}/current"
+      img = Pipeline::Util::ImgWrapper.new
+      runc = Pipeline::Util::RuncWrapper.new
+      configurator = Pipeline::Util::RuncConfigurator.new
+      configurator.seed_from_env
+
+      rootfs_source = "#{File.readlink(current_dir)}/rootfs"
+      configurator.rootfs = rootfs_source
+
+      container_driver = Pipeline::Util::ContainerDriver.new(runc, img, configurator, solution_dir)
+      container_driver.run_analyzer_for("two-fer")
+    end
+
+    def analyze_solution(track_slug, solution_id, exercise_slug)
+      iteration_folder = prepare_analysis
+      yield iteration_folder
+      run_analysis(iteration_folder, exercise_slug)
+    end
+
   end
 end
