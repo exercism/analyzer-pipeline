@@ -34,6 +34,14 @@ module Pipeline::Util
       exec_cmd "#{push_cmd} #{remote_tag}"
     end
 
+    def pull(remote_tag)
+      exec_cmd "#{pull_cmd} #{remote_tag}"
+    end
+
+    def pull_cmd
+      "#{binary_path} pull -state #{state_location}"
+    end
+
     def push_cmd
       "#{binary_path} push -state #{state_location}"
     end

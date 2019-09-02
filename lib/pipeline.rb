@@ -31,6 +31,21 @@ module Pipeline
     puts latest_tag
     AnalyzerBuild.(latest_tag, track_slug)
   end
+
+  def self.release
+    FileUtils.rm_rf "/tmp/analyzer-env/"
+    env_base = "/tmp/analyzer-env/#{SecureRandom.hex}"
+    environment = Runtime::RuntimeEnvironment.new(env_base)
+    environment.prepare
+    img = Pipeline::Util::ImgWrapper.new
+    environment.release_analyzer("ruby")
+  end
+
+  def self.analyzer
+    env_base = "/tmp/analyzer-env/1e9c733fd7502974c2a3fdd85da9c844"
+    environment = Runtime::RuntimeEnvironment.new(env_base)
+    environment.create_analyzer_workdir("ruby")
+  end
 end
 
 require "pipeline/analyzer_repo"
@@ -46,3 +61,4 @@ require "pipeline/util/runc_wrapper"
 require "pipeline/build/build_image"
 require "pipeline/build/publish_image"
 require "pipeline/build/analyzer_build"
+require "pipeline/runtime/runtime_environment"
