@@ -21,15 +21,13 @@ module Pipeline
   end
 
   def self.build_analyzer(track_slug)
-    AnalyzerBuild.("master", track_slug)
-  end
-
-  def self.scratch
-    track_slug = "rust"
     repo = Pipeline::AnalyzerRepo.for_track(track_slug)
     latest_tag = repo.tags.keys.last
+    if (latest_tag.nil?)
+      latest_tag = "master"
+    end
     puts latest_tag
-    AnalyzerBuild.(latest_tag, track_slug)
+    Pipeline::Build::AnalyzerBuild.(latest_tag, track_slug)
   end
 
   def self.release
@@ -45,11 +43,12 @@ module Pipeline
   def self.analyzer
     env_base = "/tmp/analyzer-env/1e9c733fd7502974c2a3fdd85da9c844"
     environment = Runtime::RuntimeEnvironment.new(env_base)
-    solution_dir = environment.prepare_analysis("ruby", 42)
-    iteration_folder = "#{solution_dir}/iteration"
-    File.write("#{iteration_folder}/two_fer.rb", 'puts "hello"')
-    environment.run_analysis("ruby", solution_dir, "two_fer")
-    puts File.read("#{iteration_folder}/analysis.json")
+    analysis_run = environment.new_analysis("ruby", "two-fer", 42)
+    analysis_run.prepare_iteration do |iteration_folder|
+      File.write("#{iteration_folder}/two_fer.rb", 'puts "hello"')
+    end
+    analysis_run.analyze!
+    puts analysis_run.result
   end
 end
 
@@ -67,3 +66,4 @@ require "pipeline/build/build_image"
 require "pipeline/build/publish_image"
 require "pipeline/build/analyzer_build"
 require "pipeline/runtime/runtime_environment"
+require "pipeline/runtime/analysis_run"
