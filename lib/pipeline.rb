@@ -47,14 +47,21 @@ module Pipeline
     analysis_run.prepare_iteration do |iteration_folder|
       File.write("#{iteration_folder}/two_fer.rb", 'puts "hello"')
     end
-    analysis_run.analyze!
-    puts analysis_run.success?
-    puts analysis_run.exit_status
-    puts analysis_run.result
-    puts "---"
-    puts analysis_run.stdout
-    puts analysis_run.stderr
-    puts "DONE"
+    begin
+      analysis_run.analyze!
+    rescue => e
+      puts e
+    ensure
+      puts "---"
+      puts analysis_run.stdout
+      puts "==="
+      puts analysis_run.stderr
+      puts "---"
+      puts analysis_run.success?
+      puts analysis_run.exit_status
+      puts analysis_run.result
+      puts "DONE"
+    end
   end
 end
 
