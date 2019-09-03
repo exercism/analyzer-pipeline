@@ -13,7 +13,7 @@ module Pipeline::Validation
       workdir = "/tmp/analyzer-scratch/#{SecureRandom.uuid}"
 
       @img = Pipeline::Util::ImgWrapper.new
-      # @runc = Pipeline::Util::RuncWrapper.new
+      @runc = Pipeline::Util::RuncWrapper.new
       configurator = Pipeline::Util::RuncConfigurator.new
       configurator.seed_from_env
 
