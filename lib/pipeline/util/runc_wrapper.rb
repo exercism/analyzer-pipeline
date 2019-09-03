@@ -1,3 +1,6 @@
+require 'open3'
+
+
 module Pipeline::Util
   class RuncWrapper
     attr_accessor :binary_path, :suppress_output
@@ -8,20 +11,22 @@ module Pipeline::Util
     end
 
     def run(container_folder)
+      container_id = "analyzer-#{Time.now.to_i}"
+
+      run_cmd = ExternalCommand.new("#{binary_path} --root root-state run #{container_id}")
+      run_cmd.timeout = 5
+
+      kill_cmd = ExternalCommand.new("#{binary_path} --root root-state kill #{container_id} KILL")
+
       Dir.chdir(container_folder) do
-        exec_cmd run_cmd
+        begin
+          run_cmd.call!
+        ensure
+          kill_cmd.call
+        end
       end
-    end
 
-    def run_cmd
-      "#{binary_path} --root root-state run analyzer-#{Time.now.to_i}"
-    end
-
-    def exec_cmd(cmd)
-      puts "> #{cmd}" unless suppress_output
-      puts "------------------------------------------------------------" unless suppress_output
-      success = system({}, cmd)
-      raise "Failed #{cmd}" unless success
+      run_cmd
     end
 
   end

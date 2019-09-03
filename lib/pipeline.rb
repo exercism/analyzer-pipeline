@@ -30,25 +30,31 @@ module Pipeline
     Pipeline::Build::AnalyzerBuild.(latest_tag, track_slug)
   end
 
-  def self.release
+  def self.release(language_slug)
     FileUtils.rm_rf "/tmp/analyzer-env/"
     env_base = "/tmp/analyzer-env/#{SecureRandom.hex}"
     env_base = "/tmp/analyzer-env/1e9c733fd7502974c2a3fdd85da9c844"
     environment = Runtime::RuntimeEnvironment.new(env_base)
     environment.prepare
     img = Pipeline::Util::ImgWrapper.new
-    environment.release_analyzer("ruby")
+    environment.release_analyzer(language_slug)
   end
 
-  def self.analyzer
+  def self.analyzer(language_slug)
     env_base = "/tmp/analyzer-env/1e9c733fd7502974c2a3fdd85da9c844"
     environment = Runtime::RuntimeEnvironment.new(env_base)
-    analysis_run = environment.new_analysis("ruby", "two-fer", 42)
+    analysis_run = environment.new_analysis(language_slug, "two-fer", 42)
     analysis_run.prepare_iteration do |iteration_folder|
       File.write("#{iteration_folder}/two_fer.rb", 'puts "hello"')
     end
     analysis_run.analyze!
+    puts analysis_run.success?
+    puts analysis_run.exit_status
     puts analysis_run.result
+    puts "---"
+    puts analysis_run.stdout
+    puts analysis_run.stderr
+    puts "DONE"
   end
 end
 
@@ -62,6 +68,7 @@ require "pipeline/util/container_driver"
 require "pipeline/util/runc_configurator"
 require "pipeline/util/img_wrapper"
 require "pipeline/util/runc_wrapper"
+require "pipeline/util/external_command"
 require "pipeline/build/build_image"
 require "pipeline/build/publish_image"
 require "pipeline/build/analyzer_build"

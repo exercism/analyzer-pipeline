@@ -26,11 +26,27 @@ module Pipeline::Runtime
 
     def analyze!
       container_driver = Pipeline::Util::ContainerDriver.new(runc, img, configurator, solution_dir)
-      container_driver.run_analyzer_for(exercise_slug)
+      @result = container_driver.run_analyzer_for(exercise_slug)
     end
 
     def result
       File.read("#{iteration_folder}/analysis.json")
+    end
+
+    def success?
+      @result.success?
+    end
+
+    def exit_status
+      @result.exit_status
+    end
+
+    def stdout
+      @result.stdout
+    end
+
+    def stderr
+      @result.stderr
     end
 
     private
