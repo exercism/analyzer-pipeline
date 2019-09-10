@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+require "bundler/setup"
+$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+
+require "pipeline"
+
+context = ZMQ::Context.new
+front_end_socket = context.socket(ZMQ::ROUTER)
+front_end_socket.bind('tcp://*:5566')
+
+back_end_socket = context.socket(ZMQ::DEALER)
+back_end_socket.bind('tcp://*:5577')
+
+ZMQ::Device.create(front_end_socket, back_end_socket)

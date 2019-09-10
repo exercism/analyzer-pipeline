@@ -5,13 +5,14 @@ class Pipeline::RpcServer
   def initialize
     @context = ZMQ::Context.new(1)
     @socket = context.socket(ZMQ::REP)
-    socket.bind("tcp://*:5555")
+    socket.connect("tcp://localhost:5577")
   end
 
   def listen
     loop do
       request = ''
       socket.recv_string(request)
+      sleep 10
       puts "Received request. Data: #{request.inspect}"
       if request.start_with? "build-analyzer_"
         _, arg = request.split("_")
