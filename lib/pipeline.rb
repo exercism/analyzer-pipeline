@@ -5,6 +5,7 @@ require 'securerandom'
 require 'rugged'
 require 'aws-sdk-ecr'
 require 'yaml'
+require 'json'
 
 module Pipeline
 
@@ -76,6 +77,7 @@ require "pipeline/util/runc_configurator"
 require "pipeline/util/img_wrapper"
 require "pipeline/util/runc_wrapper"
 require "pipeline/util/external_command"
+require "pipeline/util/log_collector"
 require "pipeline/build/build_image"
 require "pipeline/build/publish_image"
 require "pipeline/build/analyzer_build"

@@ -1,12 +1,13 @@
 module Pipeline::Util
   class ImgWrapper
 
-    attr_accessor :binary_path, :state_location, :suppress_output
+    attr_accessor :binary_path, :state_location, :suppress_output, :logs
 
     def initialize
       @binary_path = File.expand_path "./opt/img"
       @state_location = "/tmp/state-img"
       @suppress_output = false
+      @logs = Pipeline::Util::LogCollector.new
     end
 
     def build(local_tag)
@@ -57,8 +58,10 @@ module Pipeline::Util
     def exec_cmd(cmd)
       puts "> #{cmd}" unless suppress_output
       puts "------------------------------------------------------------" unless suppress_output
-      success = system({}, cmd)
-      raise "Failed #{cmd}" unless success
+      run_cmd = ExternalCommand.new(cmd)
+      run_cmd.call
+      logs << run_cmd
+      raise "Failed #{cmd}" unless run_cmd.success?      
     end
 
   end

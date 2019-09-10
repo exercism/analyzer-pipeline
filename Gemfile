@@ -8,6 +8,8 @@ gem 'aws-sdk-ecr'
 
 gem 'simplecov', require: false, group: :test
 
+gem "ffi-rzmq"
+
 group :development, :test do
   # gem "bundler"
   gem "rake"

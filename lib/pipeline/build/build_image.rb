@@ -10,6 +10,7 @@ module Pipeline::Build
       repo.fetch!
       checkout
       build
+      local_tag
     end
 
     def checkout
@@ -20,7 +21,6 @@ module Pipeline::Build
       Dir.chdir(repo.workdir) do
         img.build(local_tag)
       end
-      local_tag
     end
 
     def local_tag

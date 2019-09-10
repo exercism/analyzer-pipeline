@@ -12,6 +12,15 @@ module Pipeline::Build
       build
       validate
       publish
+      puts "DONE"
+      {
+        track: track_slug,
+        image: image_name,
+        image_tag: image_tag,
+        git_sha: target_sha,
+        git_tag: build_tag,
+        logs: img.logs.inspect
+      }
     end
 
     def setup_utilities
@@ -25,6 +34,7 @@ module Pipeline::Build
 
     def build
       @image_tag = Pipeline::Build::BuildImage.(build_tag, image_name, repo, img)
+      puts ">>>> #{image_tag}"
     end
 
     def validate

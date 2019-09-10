@@ -1,6 +1,3 @@
-require 'open3'
-
-
 module Pipeline::Util
   class RuncWrapper
     attr_accessor :binary_path, :suppress_output, :memory_limit

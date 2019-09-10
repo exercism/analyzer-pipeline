@@ -1,3 +1,5 @@
+require 'open3'
+
 module Pipeline::Util
   class ExternalCommand
 

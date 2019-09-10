@@ -16,6 +16,7 @@ module Pipeline::Util
     end
 
     def unpack_image(build_tag)
+      puts "unpack #{build_tag}"
       Dir.chdir(workdir) do
         img.unpack(build_tag)
       end
