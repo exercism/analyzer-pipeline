@@ -42,5 +42,14 @@ module Pipeline::Util
     def timeout=(timeout)
       @timeout = timeout
     end
+
+    def report
+      {
+        cmd: cmd_string,
+        success: success?,
+        stdout: stdout,
+        stderr: stderr
+      }
+    end
   end
 end

@@ -12,7 +12,6 @@ module Pipeline::Build
       build
       validate
       publish
-      puts "DONE"
       {
         track: track_slug,
         image: image_name,
@@ -34,7 +33,6 @@ module Pipeline::Build
 
     def build
       @image_tag = Pipeline::Build::BuildImage.(build_tag, image_name, repo, img)
-      puts ">>>> #{image_tag}"
     end
 
     def validate
@@ -51,7 +49,6 @@ module Pipeline::Build
     end
 
     memoize
-
     def repo
       Pipeline::AnalyzerRepo.for_track(track_slug)
     end

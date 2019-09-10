@@ -2,7 +2,8 @@ module Pipeline::Runtime
   class AnalysisRun
 
     attr_reader :track_dir, :exercise_slug, :runs_dir, :solution_dir,
-                :iteration_folder, :tmp_folder, :current_dir
+                :iteration_folder, :tmp_folder, :current_dir, :img,
+                :runc
 
     def initialize(track_dir, exercise_slug, solution_slug)
       @track_dir = track_dir
@@ -12,6 +13,9 @@ module Pipeline::Runtime
       @solution_dir = "#{runs_dir}/iteration_#{Time.now.to_i}-#{solution_slug}-#{SecureRandom.hex}"
       @iteration_folder = "#{solution_dir}/iteration"
       @tmp_folder = "#{solution_dir}/tmp"
+      @logs = Pipeline::Util::LogCollector.new
+      @img  = Pipeline::Util::ImgWrapper.new(@logs)
+      @runc = Pipeline::Util::RuncWrapper.new(@logs)
     end
 
     def prepare_iteration
@@ -27,6 +31,14 @@ module Pipeline::Runtime
     def analyze!
       container_driver = Pipeline::Util::ContainerDriver.new(runc, img, configurator, solution_dir)
       @result = container_driver.run_analyzer_for(exercise_slug)
+      {
+        exercise_slug: exercise_slug,
+        solution_dir: solution_dir,
+        rootfs_source: rootfs_source,
+        result: result,
+        invocation: @result.report,
+        logs: @logs.inspect
+      }
     end
 
     def result
@@ -58,14 +70,6 @@ module Pipeline::Runtime
         configurator.rootfs = rootfs_source
         configurator
       end
-    end
-
-    def img
-      @img ||= Pipeline::Util::ImgWrapper.new
-    end
-
-    def runc
-      @runc ||= Pipeline::Util::RuncWrapper.new
     end
 
     def rootfs_source

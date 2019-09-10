@@ -3,11 +3,11 @@ module Pipeline::Util
 
     attr_accessor :binary_path, :state_location, :suppress_output, :logs
 
-    def initialize
+    def initialize(logs)
       @binary_path = File.expand_path "./opt/img"
       @state_location = "/tmp/state-img"
       @suppress_output = false
-      @logs = Pipeline::Util::LogCollector.new
+      @logs = logs || Pipeline::Util::LogCollector.new
     end
 
     def build(local_tag)
@@ -61,7 +61,7 @@ module Pipeline::Util
       run_cmd = ExternalCommand.new(cmd)
       run_cmd.call
       logs << run_cmd
-      raise "Failed #{cmd}" unless run_cmd.success?      
+      raise "Failed #{cmd}" unless run_cmd.success?
     end
 
   end

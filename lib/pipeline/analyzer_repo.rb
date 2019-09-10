@@ -1,5 +1,3 @@
-require 'pp'
-
 class Pipeline::AnalyzerRepo
 
   BASE_DIR = ENV.fetch("ANALYZER_REPO_BASE_DIR", "./tmp/repos")

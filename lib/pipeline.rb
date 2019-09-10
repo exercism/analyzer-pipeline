@@ -4,8 +4,10 @@ require "active_support"
 require 'securerandom'
 require 'rugged'
 require 'aws-sdk-ecr'
+require 'aws-sdk-s3'
 require 'yaml'
 require 'json'
+require 'ffi-rzmq'
 
 module Pipeline
 
@@ -21,13 +23,17 @@ module Pipeline
     @config
   end
 
+  def self.daemon
+    server = Pipeline::RpcServer.new
+    server.listen
+  end
+
   def self.build_analyzer(track_slug)
     repo = Pipeline::AnalyzerRepo.for_track(track_slug)
     latest_tag = repo.tags.keys.last
     if (latest_tag.nil?)
       latest_tag = "master"
     end
-    puts latest_tag
     Pipeline::Build::AnalyzerBuild.(latest_tag, track_slug)
   end
 
@@ -41,31 +47,32 @@ module Pipeline
     environment.release_analyzer(language_slug)
   end
 
-  def self.analyzer(language_slug)
+  def self.analyze!(language_slug, exercise_slug, solution_slug)
     env_base = "/tmp/analyzer-env/1e9c733fd7502974c2a3fdd85da9c844"
     environment = Runtime::RuntimeEnvironment.new(env_base)
-    analysis_run = environment.new_analysis(language_slug, "two-fer", 42)
+    analysis_run = environment.new_analysis(language_slug, exercise_slug, solution_slug)
     analysis_run.prepare_iteration do |iteration_folder|
-      File.write("#{iteration_folder}/two_fer.rb", 'puts "hello"')
+      yield(iteration_folder)
     end
     begin
       analysis_run.analyze!
     rescue => e
       puts e
     ensure
-      puts "---"
-      puts analysis_run.stdout
-      puts "==="
-      puts analysis_run.stderr
-      puts "---"
-      puts analysis_run.success?
-      puts analysis_run.exit_status
-      puts analysis_run.result
+      # puts "---"
+      # puts analysis_run.stdout
+      # puts "==="
+      # puts analysis_run.stderr
+      # puts "---"
+      # puts analysis_run.success?
+      # puts analysis_run.exit_status
+      # puts analysis_run.result
       puts "DONE"
     end
   end
 end
 
+require "pipeline/rpc_server"
 require "pipeline/analyzer_repo"
 require "pipeline/validation/check_invokable"
 require "pipeline/validation/check_environment_invariants"

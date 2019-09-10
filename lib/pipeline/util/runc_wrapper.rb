@@ -2,10 +2,11 @@ module Pipeline::Util
   class RuncWrapper
     attr_accessor :binary_path, :suppress_output, :memory_limit
 
-    def initialize
+    def initialize(logs)
       @binary_path = File.expand_path "./opt/runc"
       @suppress_output = false
       @memory_limit = 3000000
+      @logs = logs || Pipeline::Util::LogCollector.new
     end
 
     def run(container_folder)
@@ -17,10 +18,13 @@ module Pipeline::Util
       kill_cmd = ExternalCommand.new("#{binary_path} --root root-state kill #{container_id} KILL")
 
       Dir.chdir(container_folder) do
+        puts "HERE: #{@logs}" + @logs.class.to_s
         begin
           run_cmd.call
+          @logs << run_cmd
         ensure
           kill_cmd.call
+          @logs << kill_cmd
         end
       end
 
