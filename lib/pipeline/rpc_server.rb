@@ -12,7 +12,6 @@ class Pipeline::RpcServer
     loop do
       request = ''
       socket.recv_string(request)
-      sleep 10
       puts "Received request. Data: #{request.inspect}"
       if request.start_with? "build-analyzer_"
         _, arg = request.split("_")

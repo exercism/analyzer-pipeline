@@ -11,4 +11,40 @@ front_end_socket.bind('tcp://*:5566')
 back_end_socket = context.socket(ZMQ::DEALER)
 back_end_socket.bind('tcp://*:5577')
 
-ZMQ::Device.create(front_end_socket, back_end_socket)
+poller = ZMQ::Poller.new
+poller.register(back_end_socket, ZMQ::POLLIN)
+poller.register(front_end_socket, ZMQ::POLLIN)
+
+workers = []
+
+loop do
+  puts "here"
+  if workers.empty?
+  end
+
+
+  poll_result = poller.poll
+  break if poll_result == -1
+
+  puts "R: #{poller.readables}"
+  puts "W: #{poller.writables}"
+
+  puts ZMQ::POLLIN
+  puts ZMQ::POLLOUT
+
+  first_readable = poller.readables.first
+  continue if first_readable.nil?
+
+  case first_readable
+  when front_end_socket
+    msg = []
+    front_end_socket.recv_strings(msg)
+    back_end_socket.send_strings(msg)
+  when back_end_socket
+    msg = []
+    back_end_socket.recv_strings(msg)
+    front_end_socket.send_strings(msg)
+  end
+end
+
+# ZMQ::Device.create(front_end_socket, back_end_socket)
