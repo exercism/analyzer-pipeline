@@ -1,21 +1,50 @@
 class Pipeline::RpcServer
 
-  attr_reader :context, :socket
+  attr_reader :context, :socket, :identity
 
   def initialize
     @context = ZMQ::Context.new(1)
     @socket = context.socket(ZMQ::REP)
-    socket.connect("tcp://localhost:5577")
+    @identity = SecureRandom.uuid
   end
 
   def listen
+    hostname = Socket.gethostname
+    # socket.setsockopt(ZMQ::IDENTITY, identity)
+    # socket.setsockopt(ZMQ::ROUTING_ID, identity)
+    # socket.connect("tcp://localhost:5577")
+    port = 5555
+    bind_result = -1
+    until bind_result != -1 || port > 5600
+      port += 1
+      # @identity = "#{port}"
+      bind_result = socket.bind("tcp://*:#{port}")
+    end
+    address = "tcp://#{hostname}:#{port}"
+
+    Thread.new do
+      puts "STARTING"
+      emitter = context.socket(ZMQ::PUB)
+      emitter.connect("tcp://localhost:5555")
+      sleep 2
+      loop do
+        emitter.send_string({ msg_type: "status", address: address, identity: identity}.to_json)
+        puts "Sent"
+        sleep 10
+      end
+    end
+
     loop do
       request = ''
       socket.recv_string(request)
       puts "Received request. Data: #{request.inspect}"
       if request.start_with? "build-analyzer_"
-        _, arg = request.split("_")
-        result = Pipeline.build_analyzer(arg)
+        _, track = request.split("_")
+        result = Pipeline.build_analyzer(track)
+        socket.send_string(result.to_json)
+      elsif request.start_with? "build-test-runner_"
+        _, track = request.split("_")
+        result = Pipeline.build_test_runner(track)
         socket.send_string(result.to_json)
       elsif request.start_with? "release-analyzer_"
         _, arg = request.split("_")

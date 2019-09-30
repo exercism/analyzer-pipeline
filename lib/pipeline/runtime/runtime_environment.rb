@@ -19,8 +19,9 @@ module Pipeline::Runtime
       current_dir = "#{track_dir}/current"
       FileUtils.mkdir_p release_dir
 
-      img = Pipeline::Util::ImgWrapper.new
-      runc = Pipeline::Util::RuncWrapper.new
+      logs = Pipeline::Util::LogCollector.new
+      img = Pipeline::Util::ImgWrapper.new logs
+      runc = Pipeline::Util::RuncWrapper.new logs
 
       configurator = Pipeline::Util::RuncConfigurator.new
       configurator.seed_from_env
@@ -47,6 +48,7 @@ module Pipeline::Runtime
       system("chmod -R a-w #{release_dir}")
       system("chmod -R go-rwx #{release_dir}")
 
+      puts "current_dir #{current_dir} -> #{release_dir}"
       FileUtils.symlink(release_dir, current_dir, force: true)
     end
 

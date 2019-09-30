@@ -40,6 +40,10 @@ class PipelineClient
     send_msg("build-analyzer_#{track_slug}", 300)
   end
 
+  def build_test_runner(track_slug)
+    send_msg("build-test-runner_#{track_slug}", 300)
+  end
+
   def release_latest(track_slug)
     send_msg("release-analyzer_#{track_slug}", 30)
   end

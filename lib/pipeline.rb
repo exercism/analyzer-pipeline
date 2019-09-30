@@ -37,13 +37,21 @@ module Pipeline
     Pipeline::Build::AnalyzerBuild.(latest_tag, track_slug)
   end
 
+  def self.build_test_runner(track_slug)
+    repo = Pipeline::AnalyzerRepo.test_runner_for_track(track_slug)
+    latest_tag = repo.tags.keys.last
+    if (latest_tag.nil?)
+      latest_tag = "master"
+    end
+    Pipeline::Build::AnalyzerBuild.(latest_tag, track_slug)
+  end
+
   def self.release(language_slug)
-    FileUtils.rm_rf "/tmp/analyzer-env/"
+    puts "Releasing #{language_slug}"
     env_base = "/tmp/analyzer-env/#{SecureRandom.hex}"
     env_base = "/tmp/analyzer-env/1e9c733fd7502974c2a3fdd85da9c844"
     environment = Runtime::RuntimeEnvironment.new(env_base)
     environment.prepare
-    img = Pipeline::Util::ImgWrapper.new
     environment.release_analyzer(language_slug)
   end
 
