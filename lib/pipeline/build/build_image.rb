@@ -10,15 +10,17 @@ module Pipeline::Build
       repo.fetch!
       checkout
       build
-      local_tag
+      @target_sha
     end
 
     def checkout
-      @target_sha = repo.checkout(build_tag)
+      target_sha = repo.checkout(build_tag)
+      @target_sha = "sha-#{target_sha}"
     end
 
     def build
       Dir.chdir(repo.workdir) do
+        img.reset_hub_login
         img.build(local_tag)
       end
     end

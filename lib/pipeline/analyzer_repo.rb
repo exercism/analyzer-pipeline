@@ -10,7 +10,7 @@ class Pipeline::AnalyzerRepo
   end
 
   def self.test_runner_for_track(track_slug)
-    repo_url = "https://github.com/exercism/#{track_slug}-analyzer"
+    repo_url = "https://github.com/exercism/#{track_slug}-test-runner"
     Pipeline::AnalyzerRepo.new(repo_url)
   end
 

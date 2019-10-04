@@ -34,7 +34,7 @@ module Pipeline
     if (latest_tag.nil?)
       latest_tag = "master"
     end
-    Pipeline::Build::AnalyzerBuild.(latest_tag, track_slug)
+    Pipeline::Build::AnalyzerBuild.(latest_tag, track_slug, repo)
   end
 
   def self.build_test_runner(track_slug)
@@ -43,7 +43,7 @@ module Pipeline
     if (latest_tag.nil?)
       latest_tag = "master"
     end
-    Pipeline::Build::AnalyzerBuild.(latest_tag, track_slug)
+    Pipeline::Build::TestRunnerBuild.(latest_tag, track_slug, repo)
   end
 
   def self.release(language_slug)
@@ -82,6 +82,7 @@ end
 
 require "pipeline/rpc_server"
 require "pipeline/analyzer_repo"
+require "pipeline/container_repo"
 require "pipeline/validation/check_invokable"
 require "pipeline/validation/check_environment_invariants"
 require "pipeline/validation/check_fixtures"
@@ -95,6 +96,8 @@ require "pipeline/util/external_command"
 require "pipeline/util/log_collector"
 require "pipeline/build/build_image"
 require "pipeline/build/publish_image"
+require "pipeline/build/container_build"
 require "pipeline/build/analyzer_build"
+require "pipeline/build/test_runner_build"
 require "pipeline/runtime/runtime_environment"
 require "pipeline/runtime/analysis_run"

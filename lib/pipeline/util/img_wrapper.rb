@@ -23,6 +23,10 @@ module Pipeline::Util
       exec_cmd "#{binary_path} login -u #{user} -p \"#{password}\" #{registry_endpoint}"
     end
 
+    def reset_hub_login
+      exec_cmd "#{binary_path} logout"
+    end
+
     def logout(registry_endpoint)
       exec_cmd "#{binary_path} logout #{registry_endpoint}"
     end

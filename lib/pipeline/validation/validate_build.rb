@@ -34,8 +34,9 @@ class Pipeline::Validation::ValidateBuild
 
   memoize
   def container_driver
-    img = Pipeline::Util::ImgWrapper.new
-    runc = Pipeline::Util::RuncWrapper.new
+    @logs = Pipeline::Util::LogCollector.new
+    img = Pipeline::Util::ImgWrapper.new(@logs)
+    runc = Pipeline::Util::RuncWrapper.new(@logs)
     configurator = Pipeline::Util::RuncConfigurator.new
     configurator.seed_from_env
     Pipeline::Util::ContainerDriver.new(runc, img, configurator, workdir)
