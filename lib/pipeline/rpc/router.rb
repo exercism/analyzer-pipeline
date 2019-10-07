@@ -104,7 +104,7 @@ module Pipeline::Rpc
       puts ">>>> #{msg}"
       if (msg[2] == "describe_analysers")
         analyzer_spec = {
-          "ruby" => "master"
+          "ruby" => [ "v0.0.3", "v0.0.5" ]
         }
         reply = [msg.first, "", analyzer_spec.to_json]
         front_end_socket.send_strings(reply)

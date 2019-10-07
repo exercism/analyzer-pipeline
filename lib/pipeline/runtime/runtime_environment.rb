@@ -11,16 +11,16 @@ module Pipeline::Runtime
       FileUtils.mkdir_p env_base
     end
 
-    def released?(track_slug)
-      track_dir = "#{env_base}/#{track_slug}"
+    def released?(track_slug, version)
+      track_dir = "#{env_base}/#{track_slug}/#{version}"
       current_dir = "#{track_dir}/current"
-      File.exist? current_dir      
+      File.exist? current_dir
     end
 
-    def release_analyzer(track_slug)
+    def release_analyzer(track_slug, version)
       registry_endpoint = Pipeline.config["registry_endpoint"]
 
-      track_dir = "#{env_base}/#{track_slug}"
+      track_dir = "#{env_base}/#{track_slug}/#{version}"
       release_dir = "#{track_dir}/releases/#{Time.now.to_i}_release"
       current_dir = "#{track_dir}/current"
       FileUtils.mkdir_p release_dir
@@ -57,16 +57,18 @@ module Pipeline::Runtime
       FileUtils.symlink(release_dir, current_dir, force: true)
     end
 
-    def create_analyzer_workdir(track_slug)
-      track_dir = "#{env_base}/#{track_slug}"
-      current_dir = "#{track_dir}/current"
-      iterations = "#{track_dir}/iterations"
-      FileUtils.mkdir_p iterations
-    end
+    # def create_analyzer_workdir(track_slug, version, version)
+    #   container_slug = "#{track_slug}/#{version}"
+    #   track_dir = "#{env_base}/#{container_slug}"
+    #   current_dir = "#{track_dir}/current"
+    #   iterations = "#{track_dir}/iterations"
+    #   FileUtils.mkdir_p iterations
+    # end
 
-    def new_analysis(track_slug, exercise_slug, solution_slug)
-      puts "AnalysisRun: #{track_slug} #{exercise_slug} #{solution_slug}"
-      track_dir = "#{env_base}/#{track_slug}"
+    def new_invocation(track_slug, version, exercise_slug, solution_slug)
+      container_slug = "#{track_slug}/#{version}"
+      puts "AnalysisRun: #{container_slug} #{exercise_slug} #{solution_slug}"
+      track_dir = "#{env_base}/#{container_slug}"
       AnalysisRun.new(track_dir, exercise_slug, solution_slug)
     end
 

@@ -6,6 +6,6 @@ require "pipeline"
 
 env_base = ARGV[0]
 
-Pipeline.load_config(File.expand_path('../../config/pipeline.yml', __FILE__))
-server = Pipeline::Rpc::Server.new(env_base)
+# Pipeline.load_config(File.expand_path('../../config/pipeline.yml', __FILE__))
+server = Pipeline::Rpc::Worker.new(env_base)
 server.listen

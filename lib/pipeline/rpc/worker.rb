@@ -1,4 +1,4 @@
-class Pipeline::Rpc::Server
+class Pipeline::Rpc::Worker
 
   attr_reader :context, :incoming, :outgoing, :environment
 
@@ -22,12 +22,15 @@ class Pipeline::Rpc::Server
 
     environment.prepare
 
-    analyzer_spec.each do |language_slug, version|
-      if environment.released?(language_slug)
-        puts "Already installed #{language_slug}"
-      else
-        puts "Installed #{language_slug}"
-        environment.release_analyzer(language_slug)
+    analyzer_spec.each do |language_slug, versions|
+      puts "Preparing #{language_slug} #{versions}"
+      versions.each do |version|
+        if environment.released?(language_slug, version)
+          puts "Already installed #{language_slug}"
+        else
+          puts "Installed #{language_slug}"
+          environment.release_analyzer(language_slug, version)
+        end
       end
     end
   end
@@ -41,12 +44,12 @@ class Pipeline::Rpc::Server
       incoming.recv_strings(msg)
       puts "Received request. Data: #{msg.inspect}"
       return_address = msg[0].unpack('c*')
-      puts return_address
-      request = msg[2]
-      if request.start_with? "analyze_"
-        _, arg = request.split("_", 2)
-        track, exercise_slug, solution_slug, location = arg.split("|")
-        result = analyze(track, exercise_slug, solution_slug, location)
+      raw_request = msg[2]
+      request = JSON.parse(raw_request)
+      puts request
+      action = request["action"]
+      if action == "analyze_iteration"
+        result = analyze(request)
         result["return_address"] = return_address
         result['msg_type'] = 'response'
         outgoing.send_string(result.to_json)
@@ -56,8 +59,20 @@ class Pipeline::Rpc::Server
     end
   end
 
-  def analyze(language_slug, exercise_slug, solution_slug, location)
-    analysis_run = environment.new_analysis(language_slug, exercise_slug, solution_slug)
+  def analyze(request)
+    language_slug = request["track_slug"]
+    exercise_slug = request["exercise_slug"]
+    solution_slug = request["solution_slug"]
+    location = request["iteration_folder"]
+    container_version = request["container_version"]
+
+    unless environment.released?(language_slug, container_version)
+      return {
+        error: "Container #{language_slug}:#{container_version} isn't available"
+      }
+    end
+
+    analysis_run = environment.new_invocation(language_slug, container_version, exercise_slug, solution_slug)
     analysis_run.prepare_iteration do |iteration_folder|
       location_uri = URI(location)
       bucket = location_uri.host

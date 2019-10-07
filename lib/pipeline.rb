@@ -76,7 +76,7 @@ module Pipeline
 end
 
 require "pipeline/rpc/router"
-require "pipeline/rpc/server"
+require "pipeline/rpc/worker"
 require "pipeline/analyzer_repo"
 require "pipeline/container_repo"
 require "pipeline/validation/check_invokable"
