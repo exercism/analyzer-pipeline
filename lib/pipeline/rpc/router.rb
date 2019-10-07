@@ -50,51 +50,86 @@ module Pipeline::Rpc
         readables.each do |readable|
           case readable
           when response_socket
-            incoming_recv
+            on_service_response
           when front_end_socket
-            handle_frontend_req
+            on_frontend_request
           end
         end
       end
     end
 
     private
-    def incoming_recv
-      puts "..."
+
+    def analyzer_versions
+      {
+        analyzer_spec: {
+          "ruby" => [ "v0.0.3", "v0.0.5" ]
+        }
+      }
+    end
+
+    def on_service_response
       msg = ""
       response_socket.recv_string(msg)
       status_message = JSON.parse(msg)
       type = status_message["msg_type"]
-      puts "STATUS MSG TYPE: #{status_message["msg_type"]} "
-      if type == "status"
-        # address = status_message["address"]
-        # identity = status_message["identity"]
-        # @workers[identity] = { last_seen: Time.now.to_i, status: status_message }
-        # # back_end_socket.connect(address)
-        # check_active
-      elsif type == "response"
-        # puts "RESP"
+      if type == "response"
         return_address = status_message["return_address"]
-        # puts return_address
-        # puts return_address.pack("c*")
         reply = [return_address.pack("c*"), "", msg]
         front_end_socket.send_strings(reply, ZMQ::DONTWAIT)
       elsif type == "heartbeat"
-        puts "heartbeat msg"
-        puts "in_flight: #{@in_flight}"
-        timed_out = []
-        now = Time.now.to_i
-        @in_flight.each do |k, v|
-          expiry = v[:timeout]
-          timed_out << k if expiry < now
-        end
-        timed_out.each do |addr|
-          reply = [addr, "", { status: :timeout }.to_json]
-          front_end_socket.send_strings(reply)
-          @in_flight.delete(addr)
-        end
+        flush_expired_requests
       else
-        puts "OTHER"
+        puts "Unrecognised message"
+      end
+    end
+
+    def flush_expired_requests
+      timed_out = []
+      now = Time.now.to_i
+      @in_flight.each do |addr, v|
+        expiry = v[:timeout]
+        timed_out << addr if expiry < now
+      end
+      timed_out.each do |addr|
+        reply = [addr, "", { status: :timeout }.to_json]
+        front_end_socket.send_strings(reply)
+        puts "Timing out #{@in_flight[addr]}"
+        @in_flight.delete(addr)
+      end
+    end
+
+    def emit_analyzer_spec(msg)
+      analyzer_spec = analyzer_versions
+      set_temp_credentials(analyzer_spec)
+      reply = [msg.first, "", analyzer_spec.to_json]
+      front_end_socket.send_strings(reply)
+    end
+
+    def worker_available?
+      poll_result = workers_poller.poll(500)
+      poll_result != -1 && workers_poller.writables.size > 0
+    end
+
+    def forward_to_backend(msg)
+      @in_flight[msg.first] = {msg: msg, timeout: Time.now.to_i + 5}
+      raw_msg = msg[2]
+      m = JSON.parse(raw_msg)
+      set_temp_credentials(m)
+      upstream_msg = [msg.first, "", m.to_json]
+      back_end_socket.send_strings(upstream_msg, ZMQ::DONTWAIT)
+    end
+
+    def on_frontend_request
+      msg = []
+      front_end_socket.recv_strings(msg)
+      if (msg[2] == "describe_analysers")
+        emit_analyzer_spec(msg)
+      elsif worker_available?
+        forward_to_backend(msg)
+      else
+        reply = [msg.first, "", { status: :worker_unavailable }.to_json]
+        front_end_socket.send_strings(reply)
       end
     end
 
@@ -103,44 +138,6 @@ module Pipeline::Rpc
       session = sts.get_session_token(duration_seconds: 900)
       msg["credentials"] = session.to_h[:credentials]
       msg
-    end
-
-    def handle_frontend_req
-      msg = []
-      front_end_socket.recv_strings(msg)
-      puts ">>>> #{msg}"
-      if (msg[2] == "describe_analysers")
-        analyzer_spec = {
-          analyzer_spec: {
-            "ruby" => [ "v0.0.3", "v0.0.5" ]
-          }
-        }
-        set_temp_credentials(analyzer_spec)
-        reply = [msg.first, "", analyzer_spec.to_json]
-        front_end_socket.send_strings(reply)
-        return
-      end
-
-      poll_result = workers_poller.poll(500)
-      writable = poll_result != -1 && workers_poller.writables.size > 0
-      if !writable
-        reply = [msg.first, "", { status: :failed }.to_json]
-        front_end_socket.send_strings(reply)
-      else
-        @in_flight[msg.first] = {msg: msg, timeout: Time.now.to_i + 5}
-
-        sts =  Aws::STS::Client.new(region: "eu-west-1")
-        session = sts.get_session_token(duration_seconds: 900)
-
-        raw_msg = msg[2]
-        m = JSON.parse(raw_msg)
-        set_temp_credentials(m)
-        upstream_msg = [msg.first, "", m.to_json]
-
-        puts upstream_msg
-
-        result = back_end_socket.send_strings(upstream_msg, ZMQ::DONTWAIT)
-      end
     end
   end
 end
