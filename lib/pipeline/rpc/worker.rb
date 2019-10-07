@@ -1,8 +1,9 @@
 class Pipeline::Rpc::Worker
 
-  attr_reader :context, :incoming, :outgoing, :environment
+  attr_reader :identity, :context, :incoming, :outgoing, :environment
 
-  def initialize(env_base)
+  def initialize(identity, env_base)
+    @identity = identity
     @context = ZMQ::Context.new(1)
     @incoming = context.socket(ZMQ::PULL)
     @outgoing = context.socket(ZMQ::PUB)
@@ -20,6 +21,7 @@ class Pipeline::Rpc::Worker
     msg = JSON.parse(msg)
     analyzer_spec = msg["analyzer_spec"]
     credentials = parse_credentials(msg)
+    @setup.close
 
     environment.prepare
 
@@ -47,7 +49,6 @@ class Pipeline::Rpc::Worker
       return_address = msg[0].unpack('c*')
       raw_request = msg[2]
       request = JSON.parse(raw_request)
-      puts request
       action = request["action"]
       if action == "analyze_iteration"
         result = analyze(request)

@@ -4,7 +4,8 @@ $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
 require "pipeline"
 
-env_base = ARGV[0]
+worker_identity = ARGV[0]
+env_base = ARGV[1]
 
-server = Pipeline::Rpc::Worker.new(env_base)
+server = Pipeline::Rpc::Worker.new(worker_identity, env_base)
 server.listen
