@@ -31,6 +31,7 @@ class PipelineClient
     response = ""
     recv_result = socket.recv_string(response)
     puts recv_result
+    puts response
     raise("RCV timeout") if recv_result < 0
     parsed = JSON.parse(response)
     return parsed
@@ -49,7 +50,7 @@ class PipelineClient
   end
 
   def analyze(track_slug, exercise_slug, solution_slug, iteration_folder)
-    send_msg("analyze_#{track_slug}|#{exercise_slug}|#{solution_slug}|#{iteration_folder}", 1000)
+    send_msg("analyze_#{track_slug}|#{exercise_slug}|#{solution_slug}|#{iteration_folder}", 10000)
   end
 
 end

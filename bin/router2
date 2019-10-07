@@ -8,31 +8,33 @@ context = ZMQ::Context.new
 front_end_socket = context.socket(ZMQ::ROUTER)
 front_end_socket.bind('tcp://*:5566')
 
-back_end_socket = context.socket(ZMQ::DEALER)
-# back_end_socket = context.socket(ZMQ::ROUTER)
+back_end_socket = context.socket(ZMQ::PUSH)
 @back_end_socket = back_end_socket
 
+
+resp_socket = context.socket(ZMQ::SUB)
+resp_socket.setsockopt(ZMQ::SUBSCRIBE, "")
+resp_socket.bind('tcp://*:5556')
 
 status_socket = context.socket(ZMQ::SUB)
 status_socket.setsockopt(ZMQ::SUBSCRIBE, "")
 status_socket.bind('tcp://*:5555')
 
 poller = ZMQ::Poller.new
-poller.register(back_end_socket, ZMQ::POLLIN)
+# poller.register(back_end_socket, ZMQ::POLLIN)
 poller.register(front_end_socket, ZMQ::POLLIN)
 poller.register(status_socket, ZMQ::POLLIN)
+poller.register(resp_socket, ZMQ::POLLIN)
+
+workers_poller = ZMQ::Poller.new
+workers_poller.register(back_end_socket, ZMQ::POLLOUT)
 
 @workers = {}
 
 def active_workers
   active = []
-  cut_off = Time.now.to_i - 2000
-  puts "Cut off #{cut_off}"
   @workers.each do |k, worker|
-    puts "worker: #{worker}"
-    last_seen = worker[:last_seen]
-    puts "last_seen #{last_seen}"
-    active << worker if last_seen > cut_off
+    active << worker if worker[:active]
   end
   active
 end
@@ -79,18 +81,35 @@ loop do
 
   readables.each do |readable|
     case readable
+    when resp_socket
+      puts "resp_socket"
+      msg = ""
+      resp_socket.recv_string(msg)
+      puts msg
+      puts "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
     when status_socket
       puts "..."
       msg = ""
       status_socket.recv_string(msg)
+      puts "STATUS MSG: #{msg} "
       status_message = JSON.parse(msg)
-      address = status_message["address"]
-      identity = status_message["identity"]
-      @workers[identity] = { last_seen: Time.now.to_i, status: status_message }
-      back_end_socket.connect(address)
-      puts "STATUS: #{msg}"
-      puts "in_flight: #{in_flight}"
-      check_active
+      type = status_message["msg_type"]
+      puts "STATUS MSG TYPE: #{status_message["msg_type"]} "
+      if type == "status"
+        address = status_message["address"]
+        identity = status_message["identity"]
+        @workers[identity] = { last_seen: Time.now.to_i, status: status_message }
+        back_end_socket.connect(address)
+        puts "in_flight: #{in_flight}"
+        check_active
+      else
+        puts "OTHER"
+        return_address = status_message["return_address"]
+        puts return_address
+        puts return_address.pack("c*")
+        reply = [return_address.pack("c*"), "", msg]
+        front_end_socket.send_strings(reply)
+      end
     when front_end_socket
       check_active
       workers = active_workers
@@ -103,11 +122,15 @@ loop do
         reply = [msg.first, "", { status: :failed }.to_json]
         front_end_socket.send_strings(reply)
       else
+        poll_result = workers_poller.poll
+        puts "WORKERS POLL #{poll_result}"
         msg = []
         front_end_socket.recv_strings(msg)
         puts "Address #{msg.first} |  #{msg}"
         in_flight[msg.first] = msg
-        result = back_end_socket.send_strings(msg, 1000)
+        puts "send1"
+        result = back_end_socket.send_strings(msg, ZMQ::DONTWAIT)
+        puts "send2"
         puts result
       end
     when back_end_socket

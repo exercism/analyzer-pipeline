@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+require "bundler/setup"
+$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+
+require "pipeline"
+
+Pipeline.load_config(File.expand_path('../../config/pipeline.yml', __FILE__))
+# Pipeline.release("ruby")
+Pipeline.daemon
+# Pipeline.build_analyzer "ruby"
+# Pipeline.build_test_runner "ruby"

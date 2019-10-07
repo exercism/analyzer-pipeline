@@ -28,13 +28,12 @@ module Pipeline::Runtime
 
       container_driver = Pipeline::Util::ContainerDriver.new(runc, img, configurator, release_dir)
 
-      ecr = Aws::ECR::Client.new(region: 'eu-west-1')
-      authorization_token = ecr.get_authorization_token.authorization_data[0].authorization_token
-      plain = Base64.decode64(authorization_token)
-      user,password = plain.split(":")
-      img.login("AWS", password, registry_endpoint)
+      container_repo = Pipeline::ContainerRepo.new("#{track_slug}-analyzer-dev")
+      user,password = container_repo.create_login_token
+      img.reset_hub_login
+      img.login("AWS", password, container_repo.repository_url)
 
-      remote_tag = "#{registry_endpoint}/#{track_slug}-analyzer-dev:latest"
+      remote_tag = "#{container_repo.repository_url}:latest"
       puts remote_tag
 
       img.pull(remote_tag)

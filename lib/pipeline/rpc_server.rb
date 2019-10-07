@@ -4,7 +4,9 @@ class Pipeline::RpcServer
 
   def initialize
     @context = ZMQ::Context.new(1)
-    @socket = context.socket(ZMQ::REP)
+    @socket = context.socket(ZMQ::PULL)
+    @outgoing = context.socket(ZMQ::PUB)
+    @outgoing.connect("tcp://localhost:5555")
     @identity = SecureRandom.uuid
   end
 
@@ -35,9 +37,12 @@ class Pipeline::RpcServer
     end
 
     loop do
-      request = ''
-      socket.recv_string(request)
-      puts "Received request. Data: #{request.inspect}"
+      msg = []
+      socket.recv_strings(msg)
+      puts "Received request. Data: #{msg.inspect}"
+      return_address = msg[0].unpack('c*')
+      puts return_address
+      request = msg[2]
       if request.start_with? "build-analyzer_"
         _, track = request.split("_")
         result = Pipeline.build_analyzer(track)
@@ -73,12 +78,16 @@ class Pipeline::RpcServer
             })
           end
         end
-        socket.send_string(result.to_json)
+        puts "DONE"
+        # socket.send_string(result.to_json)
+        result["return_address"] = return_address
+        @outgoing.send_string(result.to_json)
       else
-        socket.send_string("done")
+        puts "HERE ELSE: #{request}"
+        # @outgoing.send_string("done")
       end
     end
-    socket.send_string(msg)
+    # socket.send_string(msg)
   end
 
 end
