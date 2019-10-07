@@ -6,7 +6,7 @@ pipeline = PipelineClient.new
 
 # return
 lang = ARGV[0] || "ruby"
-
+lang = "ruby"
 # pipeline.build_test_runner(lang)
 
 

@@ -46,7 +46,7 @@ class PipelineClient
   end
 
   def release_latest(track_slug)
-    send_msg("release-analyzer_#{track_slug}", 30)
+    send_msg("release-analyzer_#{track_slug}", 3)
   end
 
   def analyze(track_slug, exercise_slug, solution_slug, iteration_folder)

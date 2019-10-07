@@ -11,6 +11,12 @@ module Pipeline::Runtime
       FileUtils.mkdir_p env_base
     end
 
+    def released?(track_slug)
+      track_dir = "#{env_base}/#{track_slug}"
+      current_dir = "#{track_dir}/current"
+      File.exist? current_dir      
+    end
+
     def release_analyzer(track_slug)
       registry_endpoint = Pipeline.config["registry_endpoint"]
 
@@ -59,6 +65,7 @@ module Pipeline::Runtime
     end
 
     def new_analysis(track_slug, exercise_slug, solution_slug)
+      puts "AnalysisRun: #{track_slug} #{exercise_slug} #{solution_slug}"
       track_dir = "#{env_base}/#{track_slug}"
       AnalysisRun.new(track_dir, exercise_slug, solution_slug)
     end

@@ -4,8 +4,8 @@ $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
 require "pipeline"
 
+env_base = ARGV[0]
+
 Pipeline.load_config(File.expand_path('../../config/pipeline.yml', __FILE__))
-# Pipeline.release("ruby")
-Pipeline.daemon
-# Pipeline.build_analyzer "ruby"
-# Pipeline.build_test_runner "ruby"
+server = Pipeline::Rpc::Server.new(env_base)
+server.listen

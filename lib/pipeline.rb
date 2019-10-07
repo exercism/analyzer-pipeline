@@ -23,11 +23,6 @@ module Pipeline
     @config
   end
 
-  def self.daemon
-    server = Pipeline::RpcServer.new
-    server.listen
-  end
-
   def self.build_analyzer(track_slug)
     repo = Pipeline::AnalyzerRepo.for_track(track_slug)
     latest_tag = repo.tags.keys.last
@@ -80,7 +75,8 @@ module Pipeline
   end
 end
 
-require "pipeline/rpc_server"
+require "pipeline/rpc/router"
+require "pipeline/rpc/server"
 require "pipeline/analyzer_repo"
 require "pipeline/container_repo"
 require "pipeline/validation/check_invokable"
