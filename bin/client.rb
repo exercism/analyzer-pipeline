@@ -45,10 +45,6 @@ class PipelineClient
     send_msg("build-test-runner_#{track_slug}", 300)
   end
 
-  def release_latest(track_slug)
-    send_msg("release-analyzer_#{track_slug}", 3)
-  end
-
   def analyze(track_slug, exercise_slug, solution_slug, iteration_folder)
     send_msg("analyze_#{track_slug}|#{exercise_slug}|#{solution_slug}|#{iteration_folder}", 10000)
   end
