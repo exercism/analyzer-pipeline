@@ -4,6 +4,7 @@ $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
 require "pipeline"
 
+Pipeline.load_config(File.expand_path('../../config/pipeline.yml', __FILE__))
 context = ZMQ::Context.new
 router = Pipeline::Rpc::Router.new(context)
 

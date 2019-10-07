@@ -17,9 +17,7 @@ module Pipeline::Runtime
       File.exist? current_dir
     end
 
-    def release_analyzer(track_slug, version)
-      registry_endpoint = Pipeline.config["registry_endpoint"]
-
+    def release_analyzer(track_slug, version, credentials)
       track_dir = "#{env_base}/#{track_slug}/#{version}"
       release_dir = "#{track_dir}/releases/#{Time.now.to_i}_release"
       current_dir = "#{track_dir}/current"
@@ -34,7 +32,7 @@ module Pipeline::Runtime
 
       container_driver = Pipeline::Util::ContainerDriver.new(runc, img, configurator, release_dir)
 
-      container_repo = Pipeline::ContainerRepo.new("#{track_slug}-analyzer-dev")
+      container_repo = Pipeline::ContainerRepo.new("#{track_slug}-analyzer-dev", credentials)
       user,password = container_repo.create_login_token
       img.reset_hub_login
       img.login("AWS", password, container_repo.repository_url)

@@ -17,8 +17,9 @@ class Pipeline::Rpc::Worker
     @setup.send_string("describe_analysers")
     msg = ""
     @setup.recv_string(msg)
-    analyzer_spec = JSON.parse(msg)
-    puts analyzer_spec
+    msg = JSON.parse(msg)
+    analyzer_spec = msg["analyzer_spec"]
+    credentials = parse_credentials(msg)
 
     environment.prepare
 
@@ -29,7 +30,7 @@ class Pipeline::Rpc::Worker
           puts "Already installed #{language_slug}"
         else
           puts "Installed #{language_slug}"
-          environment.release_analyzer(language_slug, version)
+          environment.release_analyzer(language_slug, version, credentials)
         end
       end
     end
@@ -59,7 +60,19 @@ class Pipeline::Rpc::Worker
     end
   end
 
+  def parse_credentials(request)
+    raw_credentials = request["credentials"]
+    key = raw_credentials["access_key_id"]
+    secret = raw_credentials["secret_access_key"]
+    session = raw_credentials["session_token"]
+    Aws::Credentials.new(key, secret, session)
+  end
+
   def analyze(request)
+    s3 = Aws::S3::Client.new(
+      credentials: parse_credentials(request),
+      region: "eu-west-1")
+
     language_slug = request["track_slug"]
     exercise_slug = request["exercise_slug"]
     solution_slug = request["solution_slug"]
@@ -77,7 +90,6 @@ class Pipeline::Rpc::Worker
       location_uri = URI(location)
       bucket = location_uri.host
       path = location_uri.path[1..]
-      s3 = Aws::S3::Client.new(region: 'eu-west-1')
       params = {
         bucket: bucket,
         prefix: "#{path}/",

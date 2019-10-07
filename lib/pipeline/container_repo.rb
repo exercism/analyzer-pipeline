@@ -2,8 +2,9 @@ class Pipeline::ContainerRepo
 
   attr_reader :image_name
 
-  def initialize(image_name)
+  def initialize(image_name, credentials=nil)
     @image_name = image_name
+    @credentials = credentials
   end
 
   def create_if_required
@@ -55,7 +56,12 @@ class Pipeline::ContainerRepo
   end
 
   def ecr
-    @ecr ||= Aws::ECR::Client.new(region: 'eu-west-1')
+    @ecr ||= begin
+      Aws::ECR::Client.new(
+        region: 'eu-west-1',
+        credentials: @credentials
+      )
+    end
   end
 
 end

@@ -98,14 +98,24 @@ module Pipeline::Rpc
       end
     end
 
+    def set_temp_credentials(msg)
+      sts =  Aws::STS::Client.new(region: "eu-west-1")
+      session = sts.get_session_token(duration_seconds: 900)
+      msg["credentials"] = session.to_h[:credentials]
+      msg
+    end
+
     def handle_frontend_req
       msg = []
       front_end_socket.recv_strings(msg)
       puts ">>>> #{msg}"
       if (msg[2] == "describe_analysers")
         analyzer_spec = {
-          "ruby" => [ "v0.0.3", "v0.0.5" ]
+          analyzer_spec: {
+            "ruby" => [ "v0.0.3", "v0.0.5" ]
+          }
         }
+        set_temp_credentials(analyzer_spec)
         reply = [msg.first, "", analyzer_spec.to_json]
         front_end_socket.send_strings(reply)
         return
@@ -118,7 +128,18 @@ module Pipeline::Rpc
         front_end_socket.send_strings(reply)
       else
         @in_flight[msg.first] = {msg: msg, timeout: Time.now.to_i + 5}
-        result = back_end_socket.send_strings(msg, ZMQ::DONTWAIT)
+
+        sts =  Aws::STS::Client.new(region: "eu-west-1")
+        session = sts.get_session_token(duration_seconds: 900)
+
+        raw_msg = msg[2]
+        m = JSON.parse(raw_msg)
+        set_temp_credentials(m)
+        upstream_msg = [msg.first, "", m.to_json]
+
+        puts upstream_msg
+
+        result = back_end_socket.send_strings(upstream_msg, ZMQ::DONTWAIT)
       end
     end
   end
