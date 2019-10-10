@@ -105,7 +105,7 @@ class Pipeline::Rpc::Worker
 
   def analyze(request)
     s3 = Aws::S3::Client.new(
-      credentials: parse_credentials(request),
+      credentials: parse_credentials(request["context"]),
       region: "eu-west-1")
 
     language_slug = request["track_slug"]
