@@ -281,7 +281,6 @@ module Pipeline::Rpc
     def on_service_response(msg)
       if msg.type == "response"
         @in_flight_requests.forward_response(msg)
-        @in_flight_requests.unregister(msg.return_address)
       elsif msg.type == "heartbeat"
         @in_flight_requests.flush_expired_requests
         emit_current_spec
