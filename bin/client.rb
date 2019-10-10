@@ -58,4 +58,17 @@ class PipelineClient
     send_msg(msg, 10000)
   end
 
+  def test_run(track_slug, exercise_slug, solution_slug, iteration_folder)
+    params = {
+      action: "test_solution",
+      track_slug: track_slug,
+      container_version: "v0.0.5",
+      exercise_slug: exercise_slug,
+      solution_slug: solution_slug,
+      iteration_folder: iteration_folder
+    }
+    msg = params.to_json
+    send_msg(msg, 10000)
+  end
+
 end

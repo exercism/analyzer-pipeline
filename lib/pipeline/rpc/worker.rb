@@ -6,8 +6,6 @@ class Pipeline::Rpc::Worker
     @identity = identity
     @context = ZMQ::Context.new(1)
     @incoming = context.socket(ZMQ::PULL)
-    @outgoing = context.socket(ZMQ::PUB)
-    @outgoing.connect("tcp://localhost:5555")
     @environment = Pipeline::Runtime::RuntimeEnvironment.new(env_base)
   end
 
@@ -15,21 +13,52 @@ class Pipeline::Rpc::Worker
     @setup = context.socket(ZMQ::REQ)
     @setup.setsockopt(ZMQ::LINGER, 0)
     @setup.connect("tcp://localhost:5566")
-    @setup.send_string("describe_analysers")
+    request = {
+      action: "configure_worker",
+      role: "static_analyzer"
+    }
+    @setup.send_string(request.to_json)
     msg = ""
     @setup.recv_string(msg)
     msg = JSON.parse(msg)
     analyzer_spec = msg["analyzer_spec"]
+    raise "No spec received" if analyzer_spec.nil?
+
+    puts msg["channels"]
+    response_address = msg["channels"]["response_address"]
+    request_address = msg["channels"]["workqueue_address"]
+
+    @outgoing = context.socket(ZMQ::PUB)
+    @outgoing.connect(response_address)
+
     credentials = parse_credentials(msg)
     @setup.close
 
     environment.prepare
 
-    analyzer_spec.each do |language_slug, versions|
+    configure_containers(analyzer_spec, credentials)
+    # analyzer_spec.each do |language_slug, versions|
+    #   puts "Preparing #{language_slug} #{versions}"
+    #   versions.each do |version|
+    #     if environment.released?(language_slug, version)
+    #       puts "Already installed #{language_slug}:#{version}"
+    #     else
+    #       puts "Installed #{language_slug}"
+    #       environment.release_analyzer(language_slug, version, credentials)
+    #     end
+    #   end
+    # end
+
+
+    incoming.connect(request_address)
+  end
+
+  def configure_containers(spec, credentials)
+    spec.each do |language_slug, versions|
       puts "Preparing #{language_slug} #{versions}"
       versions.each do |version|
         if environment.released?(language_slug, version)
-          puts "Already installed #{language_slug}"
+          puts "Already installed #{language_slug}:#{version}"
         else
           puts "Installed #{language_slug}"
           environment.release_analyzer(language_slug, version, credentials)
@@ -40,7 +69,6 @@ class Pipeline::Rpc::Worker
 
   def listen
     setup
-    incoming.connect("tcp://localhost:5577")
 
     loop do
       msg = []
@@ -55,6 +83,12 @@ class Pipeline::Rpc::Worker
         result["return_address"] = return_address
         result['msg_type'] = 'response'
         outgoing.send_string(result.to_json)
+      elsif action == "analyzer_spec"
+        puts request
+        puts "!!!!!"
+        analyzer_spec = request["spec"]
+        credentials = parse_credentials(request)
+        configure_containers(analyzer_spec, credentials)
       else
         puts "HERE ELSE: #{request}"
       end
