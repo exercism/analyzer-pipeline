@@ -8,8 +8,6 @@ Pipeline.load_config(File.expand_path('../../config/pipeline.yml', __FILE__))
 context = ZMQ::Context.new
 router = Pipeline::Rpc::Router.new(context)
 
-Thread.new do
-  router.run_heartbeater
-end
 
-router.run_eventloop
+
+router.run

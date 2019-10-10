@@ -145,46 +145,44 @@ module Pipeline::Rpc
 
   end
 
-  class Router
-    attr_reader :zmq_context, :front_end_socket, :response_socket, :poller
+  class FrontEndSocket
 
-    def initialize(zmq_context)
+    attr_reader :socket
+
+    def initialize(zmq_context, front_end_port)
+      @socket = zmq_context.socket(ZMQ::ROUTER)
+      @socket.bind("tcp://*:#{front_end_port}")
+    end
+
+    def recv
+      msg = []
+      @socket.recv_strings(msg)
+      FrontEndRequest.new(msg, @socket)
+    end
+
+  end
+
+  class ResponseSocket
+
+    attr_reader :socket
+
+    def initialize(zmq_context, response_port)
       @zmq_context = zmq_context
+      @response_port = response_port
+      @socket = zmq_context.socket(ZMQ::SUB)
+      @socket.setsockopt(ZMQ::SUBSCRIBE, "")
+      @socket.bind("tcp://*:#{@response_port}")
+    end
 
-      @front_end_socket = zmq_context.socket(ZMQ::ROUTER)
-      @front_end_socket.bind('tcp://*:5566')
-
-      @in_flight_requests = RequestRegister.new
-
-      @public_hostname = "localhost"
-      @response_port = 5555
-
-      @work_channel_ports = {
-        static_analyzers: 5577,
-        test_runners: 5578,
-        representers: 5579
-      }
-
-      @response_socket = zmq_context.socket(ZMQ::SUB)
-      @response_socket.setsockopt(ZMQ::SUBSCRIBE, "")
-      @response_socket.bind("tcp://*:#{@response_port}")
-
-      @poller = ZMQ::Poller.new
-      @poller.register(@front_end_socket, ZMQ::POLLIN)
-      @poller.register(@response_socket, ZMQ::POLLIN)
-
-      @backend_channels = {}
-      @work_channel_ports.each do |type, port|
-        bind_address = "tcp://*:#{@work_channel_ports[type]}"
-        work_channel = WorkChannel.new(zmq_context, bind_address)
-        @backend_channels[type] = work_channel
-      end
-
+    def recv
+      msg = ""
+      @socket.recv_string(msg)
+      ServiceResponse.new(msg, @socket)
     end
 
     def run_heartbeater
       puts "STARTING heartbeat_socket"
-      heartbeat_socket = zmq_context.socket(ZMQ::PUB)
+      heartbeat_socket = @zmq_context.socket(ZMQ::PUB)
       heartbeat_socket.connect("tcp://127.0.0.1:#{@response_port}")
       sleep 2
       loop do
@@ -194,29 +192,106 @@ module Pipeline::Rpc
       end
     end
 
-    def run_eventloop
+  end
+
+  class ChannelPoller
+
+    def initialize
+      @poller = ZMQ::Poller.new
+      @socket_wrappers = {}
+    end
+
+    def register(socket_wrapper)
+      socket = socket_wrapper.socket
+      @poller.register(socket, ZMQ::POLLIN)
+      @socket_wrappers[socket] = socket_wrapper
+    end
+
+    def listen_for_messages
       loop do
-        poll_result = poller.poll
+        poll_result = @poller.poll
         break if poll_result == -1
 
-        readables = poller.readables
+        readables = @poller.readables
         continue if readables.empty?
 
         readables.each do |readable|
-          case readable
-          when response_socket
-            on_service_response
-          when front_end_socket
-            on_frontend_request
+          socket_wrapper = @socket_wrappers[readable]
+          unless socket_wrapper.nil?
+            msg = socket_wrapper.recv
+            yield(msg)
           end
+        end
+      end
+    end
+  end
+
+  class Router
+    attr_reader :zmq_context, :poller, :response_socket
+
+    def initialize(zmq_context)
+      @zmq_context = zmq_context
+
+      @front_end_port = 5566
+      @front_end = FrontEndSocket.new(zmq_context, @front_end_port)
+
+      @public_hostname = "localhost"
+      @response_port = 5555
+      @response_socket = ResponseSocket.new(zmq_context, @response_port)
+
+      @poller = ChannelPoller.new
+
+      @poller.register(@front_end)
+      @poller.register(@response_socket)
+
+      @in_flight_requests = RequestRegister.new
+
+      @backend_channels = {}
+
+      @work_channel_ports = {
+        static_analyzers: 5577,
+        test_runners: 5578,
+        representers: 5579
+      }
+      @work_channel_ports.each do |type, port|
+        bind_address = "tcp://*:#{@work_channel_ports[type]}"
+        work_channel = WorkChannel.new(zmq_context, bind_address)
+        @backend_channels[type] = work_channel
+      end
+
+    end
+
+    def run
+      Thread.new do
+        response_socket.run_heartbeater
+      end
+
+      poller.listen_for_messages do |msg|
+        case msg
+        when FrontEndRequest
+          on_frontend_request(msg)
+        when ServiceResponse
+          on_service_response(msg)
         end
       end
     end
 
     private
 
-    def on_frontend_request
-      req = FrontEndRequest.recv(front_end_socket)
+    def on_service_response(msg)
+      if msg.type == "response"
+        @in_flight_requests.forward_response(msg)
+        @in_flight_requests.unregister(msg.return_address)
+      elsif msg.type == "heartbeat"
+        @in_flight_requests.flush_expired_requests
+        emit_current_spec
+      else
+        puts "Unrecognised message"
+      end
+    end
+
+
+    def on_frontend_request(req)
       req.handle do |action|
         if action == "configure_worker"
           respond_with_worker_config(req)
@@ -231,6 +306,8 @@ module Pipeline::Rpc
         end
       end
     end
+
+    private
 
     def handle_with_worker(worker_class, req)
       channel = @backend_channels[worker_class]
@@ -251,19 +328,6 @@ module Pipeline::Rpc
           "ruby" => [ "v0.0.3", "v0.0.5" ]
         }
       }
-    end
-
-    def on_service_response
-      msg = ServiceResponse.recv(response_socket)
-      if msg.type == "response"
-        @in_flight_requests.forward_response(msg)
-        @in_flight_requests.unregister(msg.return_address)
-      elsif msg.type == "heartbeat"
-        @in_flight_requests.flush_expired_requests
-        emit_current_spec
-      else
-        puts "Unrecognised message"
-      end
     end
 
     def emit_current_spec
