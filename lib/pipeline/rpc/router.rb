@@ -194,6 +194,23 @@ module Pipeline::Rpc
 
   end
 
+  class NotificationSocket
+
+    attr_reader :socket
+
+    def initialize(zmq_context, port)
+      @zmq_context = zmq_context
+      @port = port
+      @socket = zmq_context.socket(ZMQ::PUB)
+      @socket.bind("tcp://*:#{@port}")
+    end
+
+    def emit_configuration(configuration)
+      @socket.send_string(configuration.to_json)
+    end
+
+  end
+
   class ChannelPoller
 
     def initialize
@@ -227,7 +244,7 @@ module Pipeline::Rpc
   end
 
   class Router
-    attr_reader :zmq_context, :poller, :response_socket
+    attr_reader :zmq_context, :poller, :response_socket, :notification_socket
 
     def initialize(zmq_context)
       @zmq_context = zmq_context
@@ -258,6 +275,9 @@ module Pipeline::Rpc
         work_channel = WorkChannel.new(zmq_context, bind_address)
         @backend_channels[type] = work_channel
       end
+
+      @notification_port = 5556
+      @notification_socket = NotificationSocket.new(zmq_context, @notification_port)
 
     end
 
@@ -332,20 +352,40 @@ module Pipeline::Rpc
     def emit_current_spec
       analyzer_spec = analyzer_versions
       m = {
-        action: "analyzer_spec",
-        spec: analyzer_spec[:analyzer_spec]
+        action: "configure",
+        specs: analyzer_spec
       }
       set_temp_credentials(m)
-      message = ["_", "", m.to_json]
+      # message = ["_", "", m.to_json]
       puts "TODO"
-      puts message
+      puts m
+      notification_socket.emit_configuration(m)
+
+      # @backend_channels.each do |channel_name,v|
+      #   m = {
+      #     action: "configure",
+      #     channel: channel_name,
+      #     spec: analyzer_spec[:analyzer_spec]
+      #   }
+      #   puts v
+      #   puts m
+      # end
     end
 
     def respond_with_worker_config(req)
-      analyzer_spec = analyzer_versions
-      analyzer_spec[:channels] = {
-        workqueue_address: "tcp://#{@public_hostname}:#{@work_channel_ports[:static_analyzers]}",
-        response_address: "tcp://#{@public_hostname}:#{@response_port}"
+      channel = req.parsed_msg["channel"]
+      if channel.nil?
+        req.send_error({ msg: "channel unknown" })
+        return
+      end
+      channel = channel.to_sym
+      analyzer_spec = {}
+      analyzer_spec["specs"] = analyzer_versions
+      analyzer_spec[:channel] = {
+        channel: channel,
+        workqueue_address: "tcp://#{@public_hostname}:#{@work_channel_ports[channel]}",
+        response_address: "tcp://#{@public_hostname}:#{@response_port}",
+        notification_address: "tcp://#{@public_hostname}:#{@notification_port}"
       }
       analyzer_spec["credentials"] = temp_credentials
       req.send_result(analyzer_spec)
