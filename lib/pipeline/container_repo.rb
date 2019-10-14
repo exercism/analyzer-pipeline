@@ -39,10 +39,14 @@ class Pipeline::ContainerRepo
     user,password = plain.split(":")
   end
 
-  def git_shas
-    images = ecr.list_images({
+  def list_images
+    ecr.list_images({
       repository_name: image_name
     })
+  end
+
+  def git_shas
+    images = list_images()
     tags = []
     images.image_ids.each do |image|
       tag = image.image_tag

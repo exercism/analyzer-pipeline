@@ -222,21 +222,6 @@ class Pipeline::Rpc::Worker
       msg = []
 
       @poller.listen_for_messages do |action_task|
-        # puts "1 Received request. Data: #{msg.inspect}"
-        # return_address = msg[0].unpack('c*')
-        # puts "return_address: #{return_address}"
-        # raw_request = msg[2]
-        # request = JSON.parse(raw_request)
-        # action = request["action"]
-        #
-        # if action == "configure"
-        #   action_task = Pipeline::Rpc::ConfigureAction.new
-        # elsif action == "analyze_iteration" || action == "test_solution"
-        #   action_task = Pipeline::Rpc::AnalyzeAction.new
-        # else
-        #   puts "HERE ELSE: #{request}"
-        # end
-
         unless action_task.nil?
           action_task.environment = environment
           result = action_task.invoke
@@ -246,50 +231,7 @@ class Pipeline::Rpc::Worker
         end
       end
 
-      # incoming.recv_strings(msg)
-      # puts "2 Received request. Data: #{msg.inspect}"
-      # return_address = msg[0].unpack('c*')
-      # puts "return_address: #{return_address}"
-      # raw_request = msg[2]
-      # request = JSON.parse(raw_request)
-      # action = request["action"]
-      #
-      # if action == "configure"
-      #   action_task = Pipeline::Rpc::ConfigureAction.new
-      # elsif action == "analyze_iteration" || action == "test_solution"
-      #   action_task = Pipeline::Rpc::AnalyzeAction.new
-      # else
-      #   puts "HERE ELSE: #{request}"
-      # end
-
-      # continue if action_task.nil?
-      #
-      # action_task.environment = environment
-      # action_task.request = request
-      # result = action_task.invoke
-      #
-      # if result && return_address
-      #   result["return_address"] = return_address
-      #   result['msg_type'] = 'response'
-      #   outgoing.send_string(result.to_json)
-      # end
-
     end
-  end
-
-  def parse_credentials(request)
-    raw_credentials = request["credentials"]
-    key = raw_credentials["access_key_id"]
-    secret = raw_credentials["secret_access_key"]
-    session = raw_credentials["session_token"]
-    Aws::Credentials.new(key, secret, session)
-  end
-
-  def analyze(request)
-    action = Pipeline::Rpc::AnalyzeAction.new
-    action.environment = environment
-    action.request = request
-    action.invoke
   end
 
 end
