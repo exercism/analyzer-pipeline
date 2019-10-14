@@ -19,9 +19,9 @@ module Pipeline::Rpc::Worker
       action = request["action"]
 
       if action == "configure"
-        Pipeline::Rpc::ConfigureAction.new
+        ConfigureAction.new
       elsif action == "analyze_iteration" || action == "test_solution"
-        a = Pipeline::Rpc::AnalyzeAction.new(request, return_address)
+        a = AnalyzeAction.new(request, return_address)
         a.request = request
         a
       else

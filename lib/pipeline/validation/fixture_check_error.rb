@@ -1,7 +1,8 @@
-class FixtureCheckError < StandardError
+module Pipeline::Validation
+  class FixtureCheckError < StandardError
 
-  def initialize(*args)
-    super
+    def initialize(*args)
+      super
+    end
   end
-
 end

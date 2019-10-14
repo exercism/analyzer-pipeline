@@ -8,5 +8,5 @@ worker_identity = ARGV[0]
 channel_address = ARGV[1]
 env_base = ARGV[2]
 
-server = Pipeline::Rpc::Worker.new(worker_identity, channel_address, env_base)
-server.listen
+daemon = Pipeline::Rpc::Worker::Daemon.new(worker_identity, channel_address, env_base)
+daemon.listen

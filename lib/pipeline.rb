@@ -10,6 +10,11 @@ require 'yaml'
 require 'json'
 require 'ffi-rzmq'
 
+require "zeitwerk"
+loader = Zeitwerk::Loader.for_gem
+loader.setup # ready!
+
+
 module Pipeline
 
   def self.load_config(config_path)
@@ -76,25 +81,25 @@ module Pipeline
   end
 end
 
-require "pipeline/rpc/router"
-require "pipeline/rpc/worker"
-require "pipeline/analyzer_repo"
-require "pipeline/container_repo"
-require "pipeline/validation/check_invokable"
-require "pipeline/validation/check_environment_invariants"
-require "pipeline/validation/check_fixtures"
-require "pipeline/validation/fixture_check_error.rb"
-require "pipeline/validation/validate_build"
-require "pipeline/util/container_driver"
-require "pipeline/util/runc_configurator"
-require "pipeline/util/img_wrapper"
-require "pipeline/util/runc_wrapper"
-require "pipeline/util/external_command"
-require "pipeline/util/log_collector"
-require "pipeline/build/build_image"
-require "pipeline/build/publish_image"
-require "pipeline/build/container_build"
-require "pipeline/build/analyzer_build"
-require "pipeline/build/test_runner_build"
-require "pipeline/runtime/runtime_environment"
-require "pipeline/runtime/analysis_run"
+# require "pipeline/rpc/router"
+# require "pipeline/rpc/worker"
+# require "pipeline/analyzer_repo"
+# require "pipeline/container_repo"
+# require "pipeline/validation/check_invokable"
+# require "pipeline/validation/check_environment_invariants"
+# require "pipeline/validation/check_fixtures"
+# require "pipeline/validation/fixture_check_error.rb"
+# require "pipeline/validation/validate_build"
+# require "pipeline/util/container_driver"
+# require "pipeline/util/runc_configurator"
+# require "pipeline/util/img_wrapper"
+# require "pipeline/util/runc_wrapper"
+# require "pipeline/util/external_command"
+# require "pipeline/util/log_collector"
+# require "pipeline/build/build_image"
+# require "pipeline/build/publish_image"
+# require "pipeline/build/container_build"
+# require "pipeline/build/analyzer_build"
+# require "pipeline/build/test_runner_build"
+# require "pipeline/runtime/runtime_environment"
+# require "pipeline/runtime/analysis_run"

@@ -10,6 +10,7 @@ gem "aws-sdk-ecr"
 gem "simplecov", require: false, group: :test
 
 gem "ffi-rzmq"
+gem "zeitwerk"
 
 group :development, :test do
   # gem "bundler"

@@ -18,7 +18,7 @@ class PipelineClient
   def open_socket
     @socket = context.socket(ZMQ::REQ)
     @socket.setsockopt(ZMQ::LINGER, 0)
-    @socket.connect("tcp://localhost:5566")
+    @socket.connect("tcp://localhost:5555")
   end
 
   def close_socket

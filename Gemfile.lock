@@ -60,6 +60,7 @@ GEM
     thread_safe (0.3.6)
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
+    zeitwerk (2.2.0)
 
 PLATFORMS
   ruby
@@ -76,6 +77,7 @@ DEPENDENCIES
   rake
   rugged
   simplecov
+  zeitwerk
 
 BUNDLED WITH
    1.17.2

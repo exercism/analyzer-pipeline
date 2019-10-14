@@ -6,11 +6,11 @@ module Pipeline::Rpc
     def initialize(zmq_context)
       @zmq_context = zmq_context
 
-      @front_end_port = 5566
+      @front_end_port = 5555
       @front_end = FrontEndSocket.new(zmq_context, @front_end_port)
 
       @public_hostname = "localhost"
-      @response_port = 5555
+      @response_port = 5556
       @response_socket = ResponseSocket.new(zmq_context, @response_port)
 
       @poller = ChannelPoller.new
@@ -23,9 +23,9 @@ module Pipeline::Rpc
       @backend_channels = {}
 
       @work_channel_ports = {
-        static_analyzers: 5577,
-        test_runners: 5578,
-        representers: 5579
+        static_analyzers: 5560,
+        test_runners: 5561,
+        representers: 5562
       }
       @work_channel_ports.each do |type, port|
         bind_address = "tcp://*:#{@work_channel_ports[type]}"

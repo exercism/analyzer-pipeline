@@ -17,11 +17,11 @@ module Pipeline::Rpc::Worker
 
       puts "HERE #{action}"
       if action == "configure"
-        a = Pipeline::Rpc::ConfigureAction.new
+        a = Pipeline::Rpc::Worker::ConfigureAction.new
         a.request = request
         a
       elsif action == "analyze_iteration" || action == "test_solution"
-        a = Pipeline::Rpc::AnalyzeAction.new(request, return_address)
+        a = Pipeline::Rpc::Worker::AnalyzeAction.new(request, return_address)
         a
       else
         puts "HERE ELSE: #{request}"
