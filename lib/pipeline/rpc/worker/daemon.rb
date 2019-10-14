@@ -34,9 +34,8 @@ module Pipeline::Rpc::Worker
 
       environment.prepare
 
-      action = Pipeline::Rpc::Worker::ConfigureAction.new
+      action = Pipeline::Rpc::Worker::ConfigureAction.new(@channel, msg)
       action.environment = environment
-      action.request = msg
       action.invoke
 
       response_address = msg["channel"]["response_address"]
@@ -53,7 +52,7 @@ module Pipeline::Rpc::Worker
       setup
 
       @incoming_wrapper = Pipeline::Rpc::Worker::WorkSocketWrapper.new(incoming)
-      @noificationincoming_wrapper = Pipeline::Rpc::Worker::NotificationSocketWrapper.new(@notifications)
+      @noificationincoming_wrapper = Pipeline::Rpc::Worker::NotificationSocketWrapper.new(@notifications, @channel)
 
       @poller = Pipeline::Rpc::ChannelPoller.new
       @poller.register(@incoming_wrapper)

@@ -45,6 +45,13 @@ module Pipeline::Util
       run_analyzer
     end
 
+    def invoke(container_work_dir, args)
+      configurator.setup_invocation_args(container_work_dir, args)
+      File.write("#{workdir}/invocation_config.json", configurator.build.to_json)
+      FileUtils.symlink("#{workdir}/invocation_config.json", "#{workdir}/config.json", force: true)
+      run_analyzer
+    end
+
   end
 
 end

@@ -2,8 +2,13 @@ module Pipeline::Rpc::Worker
 
   class ConfigureAction < WorkerAction
 
+    def initialize(channel, request)
+      @channel = channel
+      @request = request
+    end
+
     def invoke
-      spec = request["specs"]["analyzer_spec"]
+      spec = request["specs"][@channel]
       credentials = parse_credentials(request)
       raise "No spec received" if spec.nil?
       spec.each do |language_slug, versions|
@@ -13,7 +18,7 @@ module Pipeline::Rpc::Worker
             puts "Already installed #{language_slug}:#{version}"
           else
             puts "Installed #{language_slug}"
-            environment.release_analyzer(language_slug, version, credentials)
+            environment.release(@channel, language_slug, version, credentials)
           end
         end
       end

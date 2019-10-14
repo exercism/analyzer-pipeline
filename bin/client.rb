@@ -49,11 +49,26 @@ class PipelineClient
     params = {
       action: "analyze_iteration",
       track_slug: track_slug,
-      container_version: "v0.0.5",
+      container_version: "a1f5549b6391443f7a05a038fed8dfebacd3db84",
       exercise_slug: exercise_slug,
       solution_slug: solution_slug,
       iteration_folder: iteration_folder
     }
+    puts "MSG: #{params}"
+    msg = params.to_json
+    send_msg(msg, 10000)
+  end
+
+  def represent(track_slug, exercise_slug, solution_slug, iteration_folder)
+    params = {
+      action: "represent",
+      track_slug: track_slug,
+      container_version: "7dad3dd8b43c89d0ac03b5f67700c6aad52d8cf9",
+      exercise_slug: exercise_slug,
+      solution_slug: solution_slug,
+      iteration_folder: iteration_folder
+    }
+    puts "MSG: #{params}"
     msg = params.to_json
     send_msg(msg, 10000)
   end
@@ -62,11 +77,12 @@ class PipelineClient
     params = {
       action: "test_solution",
       track_slug: track_slug,
-      container_version: "v0.0.5",
+      container_version: "b6ea39ccb2dd04e0b047b25c691b17d6e6b44cfb",
       exercise_slug: exercise_slug,
       solution_slug: solution_slug,
       iteration_folder: iteration_folder
     }
+    puts "MSG: #{params}"
     msg = params.to_json
     send_msg(msg, 10000)
   end

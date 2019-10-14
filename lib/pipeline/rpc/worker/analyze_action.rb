@@ -9,6 +9,11 @@ module Pipeline::Rpc::Worker
       @return_address = return_address
     end
 
+    def setup(track_slug, version, exercise_slug, solution_slug)
+      track_dir = environment.track_dir(track_slug, version)
+      Pipeline::Runtime::AnalysisRun.new(track_dir, exercise_slug, solution_slug)
+    end
+
     def invoke
       s3 = Aws::S3::Client.new(
         credentials: parse_credentials(request["context"]),
@@ -26,7 +31,7 @@ module Pipeline::Rpc::Worker
         }
       end
 
-      analysis_run = environment.new_invocation(language_slug, container_version, exercise_slug, solution_slug)
+      analysis_run = setup(language_slug, container_version, exercise_slug, solution_slug)
       analysis_run.prepare_iteration do |iteration_folder|
         location_uri = URI(location)
         bucket = location_uri.host

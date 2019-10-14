@@ -33,7 +33,7 @@ module Pipeline::Rpc
         @backend_channels[type] = work_channel
       end
 
-      @notification_port = 5556
+      @notification_port = 5557
       @notification_socket = NotificationSocket.new(zmq_context, @notification_port)
 
     end
@@ -98,35 +98,35 @@ module Pipeline::Rpc
       end
     end
 
-    def analyzer_versions
+    def container_versions
       {
-        analyzer_spec: {
-          "ruby" => [ "v0.0.3", "v0.0.5" ]
+        static_analyzers: {
+          "ruby" => [
+            "a1f5549b6391443f7a05a038fed8dfebacd3db84",
+            "398007701db580a09f198e806e680f4cdb04b3b4",
+            "dc1c6c4897e63ebeb60ed53ec7423a3f6c33449d"
+          ]
+        },
+        representers: {
+          "ruby" => [
+            "7dad3dd8b43c89d0ac03b5f67700c6aad52d8cf9"
+          ]
+        },
+        test_runners: {
+          "ruby" => [
+            "b6ea39ccb2dd04e0b047b25c691b17d6e6b44cfb"
+          ]
         }
       }
     end
 
     def emit_current_spec
-      analyzer_spec = analyzer_versions
       m = {
         action: "configure",
-        specs: analyzer_spec
+        specs: container_versions
       }
       set_temp_credentials(m)
-      # message = ["_", "", m.to_json]
-      puts "TODO"
-      puts m
       notification_socket.emit_configuration(m)
-
-      # @backend_channels.each do |channel_name,v|
-      #   m = {
-      #     action: "configure",
-      #     channel: channel_name,
-      #     spec: analyzer_spec[:analyzer_spec]
-      #   }
-      #   puts v
-      #   puts m
-      # end
     end
 
     def respond_with_worker_config(req)
@@ -137,7 +137,7 @@ module Pipeline::Rpc
       end
       channel = channel.to_sym
       analyzer_spec = {}
-      analyzer_spec["specs"] = analyzer_versions
+      analyzer_spec["specs"] = container_versions
       analyzer_spec[:channel] = {
         channel: channel,
         workqueue_address: "tcp://#{@public_hostname}:#{@work_channel_ports[channel]}",

@@ -18,12 +18,12 @@ module Pipeline::Rpc::Worker
       request = JSON.parse(raw_request)
       action = request["action"]
 
-      if action == "configure"
-        ConfigureAction.new
-      elsif action == "analyze_iteration" || action == "test_solution"
-        a = AnalyzeAction.new(request, return_address)
-        a.request = request
-        a
+      if action == "analyze_iteration"
+        AnalyzeAction.new(request, return_address)
+      elsif action == "represent"
+        RepresentAction.new(request, return_address)
+      elsif action == "test_solution"
+        TestRunnerAction.new(request, return_address)
       else
         puts "HERE ELSE: #{request}"
       end

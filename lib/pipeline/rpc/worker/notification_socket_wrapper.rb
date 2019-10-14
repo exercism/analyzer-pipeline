@@ -1,10 +1,11 @@
 module Pipeline::Rpc::Worker
   class NotificationSocketWrapper
 
-    attr_reader :socket
+    attr_reader :socket, :channel
 
-    def initialize(socket)
+    def initialize(socket, channel)
       @socket = socket
+      @channel = channel
     end
 
     def recv
@@ -15,13 +16,9 @@ module Pipeline::Rpc::Worker
       request = JSON.parse(msg)
       action = request["action"]
 
-      puts "HERE #{action}"
       if action == "configure"
-        a = Pipeline::Rpc::Worker::ConfigureAction.new
+        a = Pipeline::Rpc::Worker::ConfigureAction.new(channel, request)
         a.request = request
-        a
-      elsif action == "analyze_iteration" || action == "test_solution"
-        a = Pipeline::Rpc::Worker::AnalyzeAction.new(request, return_address)
         a
       else
         puts "HERE ELSE: #{request}"

@@ -17,18 +17,24 @@ module Pipeline::Runtime
       File.exist? current_dir
     end
 
-    def available?(track_slug, version)
-      puts "-- CHECK #{version} -----"
-      puts container_repo.list_images
-      puts "-------------------------"
-      true
+    def release(channel, language_slug, version, credentials)
+      container_slug = case channel
+      when "static_analyzers"
+        "#{language_slug}-analyzer"
+      when "test_runners"
+        "#{language_slug}-test-runner"
+      when "representers"
+        "#{language_slug}-representer"
+      # when "static_analyzers"
+      #   container_slug = "#{language_slug}-analyzer"
+      else
+        raise "Unknown channel: #{channel}"
+      end
+      container_repo = Pipeline::ContainerRepo.new(container_slug, credentials)
+      release_container(language_slug, version, container_repo)
     end
 
-    def container_repo
-      @container_repo ||= Pipeline::ContainerRepo.new("#{track_slug}-analyzer-dev", credentials)
-    end
-
-    def release_analyzer(track_slug, version, credentials)
+    def release_container(track_slug, version, container_repo)
       track_dir = "#{env_base}/#{track_slug}/#{version}"
       release_dir = "#{track_dir}/releases/#{Time.now.to_i}_release"
       current_dir = "#{track_dir}/current"
@@ -42,7 +48,6 @@ module Pipeline::Runtime
       configurator.seed_from_env
 
       container_driver = Pipeline::Util::ContainerDriver.new(runc, img, configurator, release_dir)
-
       user,password = container_repo.create_login_token
       img.reset_hub_login
       img.login("AWS", password, container_repo.repository_url)
@@ -63,6 +68,11 @@ module Pipeline::Runtime
 
       puts "current_dir #{current_dir} -> #{release_dir}"
       FileUtils.symlink(release_dir, current_dir, force: true)
+    end
+
+    def track_dir(track_slug, version)
+      container_slug = "#{track_slug}/#{version}"
+      "#{env_base}/#{container_slug}"
     end
 
     def new_invocation(track_slug, version, exercise_slug, solution_slug)

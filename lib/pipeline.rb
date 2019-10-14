@@ -12,8 +12,7 @@ require 'ffi-rzmq'
 
 require "zeitwerk"
 loader = Zeitwerk::Loader.for_gem
-loader.setup # ready!
-
+loader.setup
 
 module Pipeline
 
