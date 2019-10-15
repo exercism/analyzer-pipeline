@@ -8,7 +8,7 @@ module Pipeline::Rpc::Worker
       @identity = identity
       channel_address = URI(channel_address)
       @control_queue = "#{channel_address.scheme}://#{channel_address.host}:#{channel_address.port}"
-      @channel = channel_address.path[1..]
+      @channel = channel_address.path[1..-1]
       @context = ZMQ::Context.new(1)
       @incoming = context.socket(ZMQ::PULL)
       @notifications = context.socket(ZMQ::SUB)
