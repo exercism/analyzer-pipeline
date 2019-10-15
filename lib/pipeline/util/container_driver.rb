@@ -16,6 +16,7 @@ module Pipeline::Util
     end
 
     def unpack_image(build_tag)
+      puts "unpack #{build_tag}"
       Dir.chdir(workdir) do
         img.unpack(build_tag)
       end
@@ -41,6 +42,13 @@ module Pipeline::Util
       configurator.invoke_analyzer_for(exercise_slug)
       File.write("#{workdir}/analyzer_config.json", configurator.build.to_json)
       FileUtils.symlink("#{workdir}/analyzer_config.json", "#{workdir}/config.json", force: true)
+      run_analyzer
+    end
+
+    def invoke(container_work_dir, args)
+      configurator.setup_invocation_args(container_work_dir, args)
+      File.write("#{workdir}/invocation_config.json", configurator.build.to_json)
+      FileUtils.symlink("#{workdir}/invocation_config.json", "#{workdir}/config.json", force: true)
       run_analyzer
     end
 

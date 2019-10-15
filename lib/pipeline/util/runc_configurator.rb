@@ -1,6 +1,11 @@
 module Pipeline::Util
   class RuncConfigurator
-    attr_accessor :uid_id, :gid_id, :invocation_args, :interactive
+    attr_accessor :uid_id, :gid_id, :invocation_args, :interactive, :rootfs, :working_directory
+
+    def initialize
+      @rootfs = "./rootfs"
+      @working_directory = "/opt/analyzer"
+    end
 
     def seed_from_env
       @uid_id = `id -u`.chomp
@@ -12,6 +17,12 @@ module Pipeline::Util
     def invoke_analyzer_for(track_slug)
       @interactive = false
       @invocation_args = ["bin/analyze.sh", track_slug, "/mnt/exercism-iteration/"]
+    end
+
+    def setup_invocation_args(working_directory, args)
+      @interactive = false
+      @working_directory = working_directory
+      @invocation_args = args
     end
 
     def setup_for_terminal_access
@@ -38,7 +49,7 @@ module Pipeline::Util
             "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
             "TERM=xterm"
           ],
-          "cwd": "/opt/analyzer",
+          "cwd": "#{working_directory}",
           "rlimits": [
             {
               "type": "RLIMIT_NOFILE",
@@ -49,7 +60,7 @@ module Pipeline::Util
           "noNewPrivileges": true
         },
         "root": {
-          "path": "./rootfs",
+          "path": "#{rootfs}",
           "readonly": true
         },
         "hostname": "exercism-runner",

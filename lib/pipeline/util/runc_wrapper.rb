@@ -1,27 +1,34 @@
 module Pipeline::Util
   class RuncWrapper
-    attr_accessor :binary_path, :suppress_output
+    attr_accessor :binary_path, :suppress_output, :memory_limit
 
-    def initialize
+    def initialize(logs)
       @binary_path = File.expand_path "./opt/runc"
       @suppress_output = false
+      @memory_limit = 3000000
+      @logs = logs || Pipeline::Util::LogCollector.new
     end
 
     def run(container_folder)
+      container_id = "analyzer-#{Time.now.to_i}"
+
+      run_cmd = ExternalCommand.new("bash -x -c 'ulimit -v #{memory_limit}; #{binary_path} --root root-state run #{container_id}'")
+      run_cmd.timeout = 5
+
+      kill_cmd = ExternalCommand.new("#{binary_path} --root root-state kill #{container_id} KILL")
+
       Dir.chdir(container_folder) do
-        exec_cmd run_cmd
+        puts "HERE: #{@logs}" + @logs.class.to_s
+        begin
+          run_cmd.call
+          @logs << run_cmd
+        ensure
+          kill_cmd.call
+          @logs << kill_cmd
+        end
       end
-    end
 
-    def run_cmd
-      "#{binary_path} --root root-state run analyzer-#{Time.now.to_i}"
-    end
-
-    def exec_cmd(cmd)
-      puts "> #{cmd}" unless suppress_output
-      puts "------------------------------------------------------------" unless suppress_output
-      success = system({}, cmd)
-      raise "Failed #{cmd}" unless success
+      run_cmd
     end
 
   end

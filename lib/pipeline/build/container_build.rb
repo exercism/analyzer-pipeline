@@ -1,0 +1,82 @@
+module Pipeline::Build
+  class ContainerBuild
+    include Mandate
+
+    attr_accessor :img, :local_tag, :image_tag, :container_repo
+
+    initialize_with :build_tag, :track_slug, :repo
+
+    def call
+      setup_utilities
+      setup_remote_repo
+      check_tag_exists
+      if already_built?
+        puts "already_built"
+        return {
+          status: "ignored",
+          message: "Already built",
+          track: track_slug,
+          image: image_name,
+          image_tag: image_tag
+        }
+      end
+      build
+      validate
+      publish
+      {
+        status: "built",
+        message: "Successfully built",
+        track: track_slug,
+        image: image_name,
+        image_tag: image_tag,
+        git_tag: build_tag,
+        logs: img.logs.inspect
+      }
+    end
+
+    def setup_utilities
+      @logs = Pipeline::Util::LogCollector.new
+      @img = Pipeline::Util::ImgWrapper.new(@logs)
+    end
+
+    def setup_remote_repo
+      @container_repo = Pipeline::ContainerRepo.new(image_name)
+      @container_repo.create_if_required
+    end
+
+    def check_tag_exists
+      return if build_tag == "master"
+      raise "Build tag does not exist" unless repo.tags[build_tag]
+    end
+
+    def already_built?
+      puts "Already built?"
+      puts "image_name: #{image_name}"
+      puts "build_tag: #{build_tag}"
+      puts "current: #{@container_repo.git_shas}"
+      puts "repo: #{repo}"
+      current_tags = @container_repo.git_shas
+      repo.fetch!
+      target_sha = repo.checkout(build_tag)
+      puts target_sha
+      current_tags.include? target_sha
+    end
+
+    def build
+      @local_tag = Pipeline::Build::BuildImage.(build_tag, image_name, repo, img)
+      @image_tag = "#{image_name}:#{local_tag}"
+    end
+
+    def validate
+      Pipeline::Validation::ValidateBuild.(image_tag, "fixtures/#{track_slug}")
+    end
+
+    def publish
+      Pipeline::Build::PublishImage.(img, container_repo, local_tag, build_tag)
+    end
+
+    def image_name
+      raise "Image not implemented"
+    end
+  end
+end

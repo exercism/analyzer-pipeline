@@ -1,5 +1,3 @@
-require 'pp'
-
 class Pipeline::AnalyzerRepo
 
   BASE_DIR = ENV.fetch("ANALYZER_REPO_BASE_DIR", "./tmp/repos")
@@ -8,6 +6,11 @@ class Pipeline::AnalyzerRepo
 
   def self.for_track(track_slug)
     repo_url = "https://github.com/exercism/#{track_slug}-analyzer"
+    Pipeline::AnalyzerRepo.new(repo_url)
+  end
+
+  def self.test_runner_for_track(track_slug)
+    repo_url = "https://github.com/exercism/#{track_slug}-test-runner"
     Pipeline::AnalyzerRepo.new(repo_url)
   end
 

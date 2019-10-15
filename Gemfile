@@ -4,9 +4,13 @@ gem "activesupport"
 gem "mandate"
 gem "propono"
 gem "rugged"
-gem 'aws-sdk-ecr'
+gem "aws-sdk-s3"
+gem "aws-sdk-ecr"
 
-gem 'simplecov', require: false, group: :test
+gem "simplecov", require: false, group: :test
+
+gem "ffi-rzmq"
+gem "zeitwerk"
 
 group :development, :test do
   # gem "bundler"
