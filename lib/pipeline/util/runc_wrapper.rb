@@ -3,7 +3,7 @@ module Pipeline::Util
     attr_accessor :binary_path, :suppress_output, :memory_limit
 
     def initialize(logs)
-      @binary_path = File.expand_path "./opt/runc"
+      @binary_path = "/opt/container_tools/runc"
       @suppress_output = false
       @memory_limit = 3000000
       @logs = logs || Pipeline::Util::LogCollector.new
