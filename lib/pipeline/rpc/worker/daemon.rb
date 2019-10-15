@@ -5,6 +5,9 @@ module Pipeline::Rpc::Worker
     attr_reader :identity, :context, :incoming, :outgoing, :environment
 
     def initialize(identity, channel_address, env_base)
+      puts identity
+      puts channel_address
+      puts env_base
       @identity = identity
       channel_address = URI(channel_address)
       @control_queue = "#{channel_address.scheme}://#{channel_address.host}:#{channel_address.port}"
