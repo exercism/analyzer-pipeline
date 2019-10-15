@@ -9,7 +9,7 @@ module Pipeline::Rpc
       @front_end_port = 5555
       @front_end = FrontEndSocket.new(zmq_context, @front_end_port)
 
-      @public_hostname = "localhost"
+      @public_hostname = Socket.gethostname
       @response_port = 5556
       @response_socket = ResponseSocket.new(zmq_context, @response_port)
 
