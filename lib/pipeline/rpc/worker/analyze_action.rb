@@ -18,7 +18,7 @@ module Pipeline::Rpc::Worker
       location = @request["iteration_folder"]
       location_uri = URI(location)
       bucket = location_uri.host
-      path = location_uri.path[1..]
+      path = location_uri.path[1..-1]
       params = {
         bucket: bucket,
         prefix: "#{path}/",
