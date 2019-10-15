@@ -4,7 +4,7 @@ module Pipeline::Util
     attr_accessor :binary_path, :state_location, :suppress_output, :logs
 
     def initialize(logs)
-      @binary_path = File.expand_path "./opt/img"
+      @binary_path = "/opt/container_tools/img"
       @state_location = "/tmp/state-img"
       @suppress_output = false
       @logs = logs || Pipeline::Util::LogCollector.new
