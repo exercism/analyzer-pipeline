@@ -5,7 +5,8 @@ module Pipeline::Build
   class AnalyzerBuildTest < Minitest::Test
 
     def setup
-      @cmd = AnalyzerBuild.new("v0.1.1", "demotrack")
+      @repo = mock()
+      @cmd = AnalyzerBuild.new("v0.1.1", "demotrack", @repo)
     end
 
     def test_call_invokes_each_phase

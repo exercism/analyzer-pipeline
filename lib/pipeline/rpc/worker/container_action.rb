@@ -21,7 +21,7 @@ module Pipeline::Rpc::Worker
 
       language_slug = request["track_slug"]
       exercise_slug = request["exercise_slug"]
-      solution_slug = request["solution_slug"]
+      job_slug = request["id"]
       container_version = request["container_version"]
 
       unless environment.released?(language_slug, container_version)

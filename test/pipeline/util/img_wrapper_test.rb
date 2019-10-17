@@ -5,7 +5,8 @@ module Pipeline::Util
   class ImgWrapperTest < Minitest::Test
 
     def setup
-      @img = ImgWrapper.new
+      @logs = LogCollector.new
+      @img = ImgWrapper.new @logs
       @img.binary_path = "/path/to/img"
     end
 

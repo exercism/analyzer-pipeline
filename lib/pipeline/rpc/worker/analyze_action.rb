@@ -15,7 +15,7 @@ module Pipeline::Rpc::Worker
     end
 
     def prepare_folder(iteration_folder)
-      location = @request["iteration_folder"]
+      location = @request["s3_uri"]
       location_uri = URI(location)
       bucket = location_uri.host
       path = location_uri.path[1..-1]

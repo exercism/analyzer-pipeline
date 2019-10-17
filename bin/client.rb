@@ -5,9 +5,10 @@ require 'securerandom'
 
 class PipelineClient
 
-  attr_reader :context, :socket
+  attr_reader :address, :context, :socket
 
-  def initialize
+  def initialize(address="tcp://localhost:5555")
+    @address = address
     @context = ZMQ::Context.new(1)
     open_socket
     at_exit do
@@ -18,7 +19,7 @@ class PipelineClient
   def open_socket
     @socket = context.socket(ZMQ::REQ)
     @socket.setsockopt(ZMQ::LINGER, 0)
-    @socket.connect("tcp://localhost:5555")
+    @socket.connect(address)
   end
 
   def close_socket
