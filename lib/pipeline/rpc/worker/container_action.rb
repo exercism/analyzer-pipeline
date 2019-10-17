@@ -9,9 +9,9 @@ module Pipeline::Rpc::Worker
       @return_address = return_address
     end
 
-    def setup(track_slug, version, exercise_slug, solution_slug)
+    def setup(track_slug, version, exercise_slug, job_slug)
       track_dir = environment.track_dir(track_slug, version)
-      Pipeline::Runtime::AnalysisRun.new(track_dir, exercise_slug, solution_slug)
+      Pipeline::Runtime::AnalysisRun.new(track_dir, exercise_slug, job_slug)
     end
 
     def invoke
@@ -30,7 +30,7 @@ module Pipeline::Rpc::Worker
         }
       end
 
-      analysis_run = setup(language_slug, container_version, exercise_slug, solution_slug)
+      analysis_run = setup(language_slug, container_version, exercise_slug, job_slug)
       analysis_run.prepare_iteration do |iteration_folder|
         prepare_folder(iteration_folder)
       end
