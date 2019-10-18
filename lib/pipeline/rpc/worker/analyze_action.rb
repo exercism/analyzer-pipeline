@@ -9,9 +9,8 @@ module Pipeline::Rpc::Worker
       @return_address = return_address
     end
 
-    def setup(track_slug, version, exercise_slug, solution_slug)
-      track_dir = environment.track_dir(track_slug, version)
-      Pipeline::Runtime::AnalysisRun.new(track_dir, exercise_slug, solution_slug)
+    def setup_container_run(track_dir, exercise_slug, job_slug)
+      Pipeline::Runtime::AnalysisRun.new(track_dir, exercise_slug, job_slug)
     end
 
     def prepare_folder(iteration_folder)
