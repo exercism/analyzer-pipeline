@@ -12,8 +12,9 @@ module Pipeline::Validation
       repo = Pipeline::AnalyzerRepo.new(demo_analyzer_repo)
       workdir = "/tmp/analyzer-scratch/#{SecureRandom.uuid}"
 
-      @img = Pipeline::Util::ImgWrapper.new
-      @runc = Pipeline::Util::RuncWrapper.new
+      @logs = Pipeline::Util::LogCollector.new
+      @img = Pipeline::Util::ImgWrapper.new(@logs)
+      @runc = Pipeline::Util::RuncWrapper.new(@logs)
       configurator = Pipeline::Util::RuncConfigurator.new
       configurator.seed_from_env
 

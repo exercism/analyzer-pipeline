@@ -30,7 +30,7 @@ module Pipeline::Runtime
       else
         raise "Unknown channel: #{channel}"
       end
-      container_repo = Pipeline::ContainerRepo.new(container_slug, credentials)
+      container_repo = Pipeline::ContainerRepo.instance_for(container_slug, credentials)
       release_container(language_slug, version, container_repo)
     end
 

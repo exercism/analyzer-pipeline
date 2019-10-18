@@ -6,12 +6,20 @@ module Pipeline::Build
 
     def setup
       @repo = mock()
-      @cmd = AnalyzerBuild.new("v0.1.1", "demotrack", @repo)
+      @container_repo = mock()
+        # @container_repo = Pipeline::ContainerRepo.instance_for(container_slug, credentials)
+        # @container_repo = Pipeline::ContainerRepo.new(image_name)
+      @cmd = AnalyzerBuild.new("v0.1.1", "demotrack", @repo, @container_repo)
     end
 
     def test_call_invokes_each_phase
+      @cmd.img = mock()
+      @cmd.img.expects(:logs).returns(stub())
+
       @cmd.expects(:setup_utilities)
+      @cmd.expects(:setup_remote_repo)
       @cmd.expects(:check_tag_exists)
+      @cmd.expects(:already_built?)
       @cmd.expects(:build)
       @cmd.expects(:validate)
       @cmd.expects(:publish)
@@ -19,7 +27,8 @@ module Pipeline::Build
     end
 
     def test_check_tag_permits_master_branch
-      @cmd = AnalyzerBuild.new("master", "demotrack")
+      @analyzer_repo = Pipeline::AnalyzerRepo.for_track("demotrack")
+      @cmd = AnalyzerBuild.new("master", "demotrack", @analyzer_repo, nil)
       @cmd.expects(:repo).never
       @cmd.check_tag_exists
     end
@@ -62,8 +71,8 @@ module Pipeline::Build
     def test_publish_delegates_correctly
       stub_img = stub()
       @cmd.img = stub_img
-      @cmd.image_tag = "my_image_tag"
-      Pipeline::Build::PublishImage.expects(:call).with(stub_img, "demotrack-analyzer-dev", "my_image_tag", "v0.1.1")
+      @cmd.local_tag = "build_tag"
+      Pipeline::Build::PublishImage.expects(:call).with(stub_img, @container_repo, "build_tag", "v0.1.1")
       @cmd.publish
     end
 

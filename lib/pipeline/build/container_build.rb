@@ -4,7 +4,7 @@ module Pipeline::Build
 
     attr_accessor :img, :local_tag, :image_tag, :container_repo
 
-    initialize_with :build_tag, :track_slug, :repo
+    initialize_with :build_tag, :track_slug, :repo, :container_repo
 
     def call
       setup_utilities
@@ -40,8 +40,7 @@ module Pipeline::Build
     end
 
     def setup_remote_repo
-      @container_repo = Pipeline::ContainerRepo.new(image_name)
-      @container_repo.create_if_required
+      container_repo.create_if_required
     end
 
     def check_tag_exists

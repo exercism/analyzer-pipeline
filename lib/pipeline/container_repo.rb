@@ -1,5 +1,9 @@
 class Pipeline::ContainerRepo
 
+  def self.instance_for(image_name, credentials)
+    Pipeline::ContainerRepo.new(container_slug, credentials)
+  end
+
   attr_reader :image_name
 
   def initialize(image_name, credentials=nil)
