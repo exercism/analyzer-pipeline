@@ -93,5 +93,29 @@ module Pipeline::Rpc::Worker
       raise "Please prepare input"
     end
 
+    def s3_sync(s3_uri, download_folder)
+      location_uri = URI(s3_uri)
+      bucket = location_uri.host
+      path = location_uri.path[1..-1]
+      s3_download_path = "#{path}/"
+      params = {
+        bucket: bucket,
+        prefix: s3_download_path,
+      }
+      resp = s3.list_objects(params)
+      resp.contents.each do |item|
+        key = item[:key]
+        local_key = key.delete_prefix(s3_download_path)
+        target = "#{download_folder}/#{local_key}"
+        target_folder = File.dirname(target)
+        FileUtils.mkdir_p target_folder
+        s3.get_object({
+          bucket: bucket,
+          key: key,
+          response_target: target
+        })
+      end
+    end
+
   end
 end

@@ -15,23 +15,7 @@ module Pipeline::Rpc::Worker
 
     def prepare_folder(iteration_folder)
       location = @request["s3_uri"]
-      location_uri = URI(location)
-      bucket = location_uri.host
-      path = location_uri.path[1..-1]
-      params = {
-        bucket: bucket,
-        prefix: "#{path}/",
-      }
-      resp = s3.list_objects(params)
-      resp.contents.each do |item|
-        key = item[:key]
-        filename = File.basename(key)
-        s3.get_object({
-          bucket: bucket,
-          key: key,
-          response_target: "#{iteration_folder}/#{filename}"
-        })
-      end
+      s3_sync(location, iteration_folder)
     end
 
   end

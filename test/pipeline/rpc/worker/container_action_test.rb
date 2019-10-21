@@ -35,6 +35,52 @@ class Pipeline::Rpc::Worker::WorkerActionTest < Minitest::Test
     assert_equal "Please create run command", error.message
   end
 
+  def test_s3_download
+    working_folder = Dir.mktmpdir
+
+    s3 = mock()
+    mock_listing = stub(contents: [
+      {
+        key: "example_path/to/iteration_folder/basic_file.txt"
+      },
+      {
+        key: "example_path/to/iteration_folder/inner/folder/another_file.txt"
+      },
+      {
+        key: "example_path/to/iteration_folder/inner/folder/file_without_extension"
+      },
+    ])
+
+    s3.expects(:list_objects).with(
+      bucket: "example_bucket",
+      prefix: "example_path/to/iteration_folder/"
+    ).returns(mock_listing)
+
+    s3.expects(:get_object).with(
+      bucket: "example_bucket",
+      key: "example_path/to/iteration_folder/basic_file.txt",
+      response_target: "#{working_folder}/basic_file.txt"
+    )
+
+    s3.expects(:get_object).with(
+      bucket: "example_bucket",
+      key: "example_path/to/iteration_folder/inner/folder/another_file.txt",
+      response_target: "#{working_folder}/inner/folder/another_file.txt"
+    )
+
+    s3.expects(:get_object).with(
+      bucket: "example_bucket",
+      key: "example_path/to/iteration_folder/inner/folder/file_without_extension",
+      response_target: "#{working_folder}/inner/folder/file_without_extension"
+    )
+
+    @action.expects(:s3).returns(s3).at_least_once
+    @action.s3_sync("s3://example_bucket/example_path/to/iteration_folder", working_folder)
+
+    assert File.directory?("#{working_folder}")
+    assert File.directory?("#{working_folder}/inner/folder")
+  end
+
   def test_invoke_when_correct_container_is_not_released
     @environment.expects(:released?).with("demo", "abcdef").returns(false)
     result = @action.invoke
