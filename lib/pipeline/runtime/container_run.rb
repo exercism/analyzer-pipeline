@@ -38,7 +38,8 @@ module Pipeline::Runtime
         rootfs_source: rootfs_source,
         result: result,
         invocation: @result.report,
-        logs: @logs.inspect
+        logs: @logs.inspect,
+        exit_status: exit_status
       }
     end
 
