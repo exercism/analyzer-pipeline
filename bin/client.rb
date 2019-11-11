@@ -38,14 +38,6 @@ class PipelineClient
     return parsed
   end
 
-  def build_analyzer(track_slug)
-    send_msg("build-analyzer_#{track_slug}", 300)
-  end
-
-  def build_test_runner(track_slug)
-    send_msg("build-test-runner_#{track_slug}", 300)
-  end
-
   def analyze(track_slug, exercise_slug, solution_slug, iteration_folder)
     params = {
       action: "analyze_iteration",

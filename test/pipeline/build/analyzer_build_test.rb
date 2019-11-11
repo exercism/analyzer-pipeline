@@ -27,7 +27,7 @@ module Pipeline::Build
     end
 
     def test_check_tag_permits_master_branch
-      @analyzer_repo = Pipeline::AnalyzerRepo.for_track("demotrack")
+      @analyzer_repo = Pipeline::AnalyzerRepo.for_track("demotrack", "analyzer")
       @cmd = AnalyzerBuild.new("master", "demotrack", @analyzer_repo, nil)
       @cmd.expects(:repo).never
       @cmd.check_tag_exists

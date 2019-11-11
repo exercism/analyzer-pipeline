@@ -4,13 +4,8 @@ class Pipeline::AnalyzerRepo
 
   attr_reader :repo_url
 
-  def self.for_track(track_slug)
-    repo_url = "https://github.com/exercism/#{track_slug}-analyzer"
-    Pipeline::AnalyzerRepo.new(repo_url)
-  end
-
-  def self.test_runner_for_track(track_slug)
-    repo_url = "https://github.com/exercism/#{track_slug}-test-runner"
+  def self.for_track(track_slug, suffix)
+    repo_url = "https://github.com/exercism/#{track_slug}-#{suffix}"
     Pipeline::AnalyzerRepo.new(repo_url)
   end
 

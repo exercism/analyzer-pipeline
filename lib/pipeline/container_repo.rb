@@ -1,6 +1,6 @@
 class Pipeline::ContainerRepo
 
-  def self.instance_for(image_name, credentials)
+  def self.instance_for(container_slug, credentials)
     Pipeline::ContainerRepo.new(container_slug, credentials)
   end
 
