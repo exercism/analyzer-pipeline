@@ -12,6 +12,13 @@ module Pipeline::Rpc::Worker
       channel_address = URI(channel_address)
       @control_queue = "#{channel_address.scheme}://#{channel_address.host}:#{channel_address.port}"
       @channel = channel_address.path[1..-1]
+
+      @topic = "*"
+      if channel_address.query
+        query = CGI::parse(channel_address.query)
+        @topics = query["topic"] if query["topic"]
+      end
+
       @context = ZMQ::Context.new(1)
       @incoming = context.socket(ZMQ::PULL)
       @notifications = context.socket(ZMQ::SUB)
@@ -26,13 +33,15 @@ module Pipeline::Rpc::Worker
       @setup.connect(@control_queue)
       request = {
         action: "configure_worker",
-        channel: @channel
+        channel: @channel,
+        topics: @topics
       }
       @setup.send_string(request.to_json)
       msg = ""
       @setup.recv_string(msg)
       msg = JSON.parse(msg)
       puts "Bootstrap with #{msg}"
+
       @setup.close
 
       environment.prepare
@@ -42,13 +51,14 @@ module Pipeline::Rpc::Worker
       action.invoke
 
       response_address = msg["channel"]["response_address"]
-      request_address = msg["channel"]["workqueue_address"]
+      workqueue_addresses = msg["channel"]["workqueue_addresses"]
       notification_address = msg["channel"]["notification_address"]
       @outgoing = context.socket(ZMQ::PUB)
       @outgoing.connect(response_address)
-      incoming.connect(request_address)
+      workqueue_addresses.each do |workqueue_address|
+        incoming.connect(workqueue_address)
+      end
       @notifications.connect(notification_address)
-
     end
 
     def listen
@@ -65,12 +75,11 @@ module Pipeline::Rpc::Worker
         msg = []
 
         @poller.listen_for_messages do |action_task|
-          puts "ACTION #{action_task}"
           unless action_task.nil?
             action_task.environment = environment
             result = action_task.invoke
-            puts "RESULT #{result}"
             if result && result[:return_address]
+              puts "RESULT #{result}"
               outgoing.send_string(result.to_json)
             end
           end
