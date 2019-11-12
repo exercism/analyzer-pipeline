@@ -1,8 +1,4 @@
 module Pipeline::Rpc::Worker
-
-  class DaemonRestartException < StandardError
-  end
-
   class Daemon
 
     attr_reader :identity, :context, :incoming, :outgoing, :environment

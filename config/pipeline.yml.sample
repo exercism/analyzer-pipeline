@@ -1,5 +1,32 @@
-aws_access_key_id: AKIA...
-aws_secret_access_key: 
+aws_access_key_id: *************************
+aws_secret_access_key: ************************************
 aws_region: eu-west-1
-registry_endpoint:
+
 analyzer_suffix: -dev
+
+workers:
+  static_analyzers:
+    shared_queue: 43100
+    ruby:
+      worker_versions:
+        - a1f5549b6391443f7a05a038fed8dfebacd3db84
+        - 398007701db580a09f198e806e680f4cdb04b3b4
+        - dc1c6c4897e63ebeb60ed53ec7423a3f6c33449d
+
+  test_runners:
+    shared_queue: 43200
+    ruby:
+      queue: 42001
+      worker_versions:
+        - b6ea39ccb2dd04e0b047b25c691b17d6e6b44cfb
+    csharp:
+      queue: 42002
+      worker_versions:
+        - sha-122a036658c815c2024c604046692adc4c23d5c1
+
+  representers:
+    shared_queue: 43300
+    ruby:
+      queue: 43301
+      worker_versions:
+        - 7dad3dd8b43c89d0ac03b5f67700c6aad52d8cf9

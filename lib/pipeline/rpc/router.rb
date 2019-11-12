@@ -1,20 +1,21 @@
 module Pipeline::Rpc
 
   class Router
-    attr_reader :zmq_context, :poller, :response_socket, :notification_socket
+    attr_reader :zmq_context, :poller, :response_socket, :notification_socket, :container_versions
 
-    def initialize(zmq_context)
-      @zmq_context = zmq_context
-
-      @front_end_port = 5555
-      @front_end = FrontEndSocket.new(zmq_context, @front_end_port)
-
+    def initialize(zmq_context, config)
       @public_hostname = Socket.gethostname
       @response_port = 5556
+      @notification_port = 5557
+      @front_end_port = 5555
+
+
+      @zmq_context = zmq_context
+
+      @front_end = FrontEndSocket.new(zmq_context, @front_end_port)
       @response_socket = ResponseSocket.new(zmq_context, @response_port)
 
       @poller = ChannelPoller.new
-
       @poller.register(@front_end)
       @poller.register(@response_socket)
 
@@ -22,29 +23,52 @@ module Pipeline::Rpc
 
       @backend_channels = {}
 
-      @work_channel_ports = {
-        static_analyzers: {
-          "*" => 5560
-        },
-        test_runners: {
-          "*" => 5561,
-          "ruby" => 33001,
-          "csharp" => 33002
-        },
-        representers: {
-          "*" => 5562
-        }
-      }
-      @work_channel_ports.each do |type, entry|
-        backend = @backend_channels[type] = {}
-        entry.each do |topic, port|
+      # @work_channel_ports = {
+      #   static_analyzers: {
+      #     "*" => 5560
+      #   },
+      #   test_runners: {
+      #     "*" => 5561,
+      #     "ruby" => 33001,
+      #     "csharp" => 33002
+      #   },
+      #   representers: {
+      #     "*" => 5562
+      #   }
+      # }
+      @work_channel_ports = {}
+      @container_versions = {}
+
+      config["workers"].each do |worker_class, worker_config|
+        worker_class = worker_class.to_sym
+        c = @work_channel_ports[worker_class] = {}
+        cv = @container_versions[worker_class] = {}
+        backend = @backend_channels[worker_class] = {}
+        worker_config.each do |k,v|
+          if k == "shared_queue"
+            topic = "*"
+            port = v
+          else
+            topic = k
+            lang_spec = v
+            port = v["queue"]
+            cv[k] = v["worker_versions"]
+          end
           bind_address = "tcp://*:#{port}"
           work_channel = WorkChannel.new(zmq_context, bind_address)
           backend[topic] = work_channel
         end
       end
 
-      @notification_port = 5557
+      # @work_channel_ports.each do |type, entry|
+      #   backend = @backend_channels[type] = {}
+      #   entry.each do |topic, port|
+      #     bind_address = "tcp://*:#{port}"
+      #     work_channel = WorkChannel.new(zmq_context, bind_address)
+      #     backend[topic] = work_channel
+      #   end
+      # end
+
       @notification_socket = NotificationSocket.new(zmq_context, @notification_port)
     end
 
@@ -132,30 +156,31 @@ module Pipeline::Rpc
       backend.forward_to_backend(req, context)
     end
 
-    def container_versions
-      {
-        static_analyzers: {
-          "ruby" => [
-            "a1f5549b6391443f7a05a038fed8dfebacd3db84",
-            "398007701db580a09f198e806e680f4cdb04b3b4",
-            "dc1c6c4897e63ebeb60ed53ec7423a3f6c33449d"
-          ]
-        },
-        representers: {
-          "ruby" => [
-            "7dad3dd8b43c89d0ac03b5f67700c6aad52d8cf9"
-          ]
-        },
-        test_runners: {
-          "ruby" => [
-            "b6ea39ccb2dd04e0b047b25c691b17d6e6b44cfb"
-          ],
-          "csharp" => [
-            "sha-122a036658c815c2024c604046692adc4c23d5c1"
-          ]
-        }
-      }
-    end
+    # def container_versions
+    #   @container_versions
+    #   # {
+    #   #   static_analyzers: {
+    #   #     "ruby" => [
+    #   #       "a1f5549b6391443f7a05a038fed8dfebacd3db84",
+    #   #       "398007701db580a09f198e806e680f4cdb04b3b4",
+    #   #       "dc1c6c4897e63ebeb60ed53ec7423a3f6c33449d"
+    #   #     ]
+    #   #   },
+    #   #   representers: {
+    #   #     "ruby" => [
+    #   #       "7dad3dd8b43c89d0ac03b5f67700c6aad52d8cf9"
+    #   #     ]
+    #   #   },
+    #   #   test_runners: {
+    #   #     "ruby" => [
+    #   #       "b6ea39ccb2dd04e0b047b25c691b17d6e6b44cfb"
+    #   #     ],
+    #   #     "csharp" => [
+    #   #       "sha-122a036658c815c2024c604046692adc4c23d5c1"
+    #   #     ]
+    #   #   }
+    #   # }
+    # end
 
     def emit_current_spec
       m = {
