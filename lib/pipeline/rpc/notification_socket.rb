@@ -10,8 +10,10 @@ module Pipeline::Rpc
       @socket.bind("tcp://*:#{@port}")
     end
 
-    def emit_configuration(configuration)
-      @socket.send_string(configuration.to_json)
+    def emit(msg)
+      raw = msg.to_json
+      puts "SENDING #{raw}"
+      @socket.send_string(raw)
     end
 
   end

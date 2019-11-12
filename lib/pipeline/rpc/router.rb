@@ -29,7 +29,7 @@ module Pipeline::Rpc
         test_runners: {
           "*" => 5561,
           "ruby" => 33001,
-          "csharp" => 33002,
+          "csharp" => 33002
         },
         representers: {
           "*" => 5562
@@ -48,10 +48,15 @@ module Pipeline::Rpc
       @notification_socket = NotificationSocket.new(zmq_context, @notification_port)
     end
 
+    def force_worker_restart!
+      @force_restart_at = Time.now
+    end
+
     def run
       Thread.new do
         response_socket.run_heartbeater
       end
+
 
       poller.listen_for_messages do |msg|
         case msg
@@ -157,8 +162,9 @@ module Pipeline::Rpc
         action: "configure",
         specs: container_versions
       }
+      m[:force_restart_at] = @force_restart_at.to_i if @force_restart_at
       set_temp_credentials(m)
-      notification_socket.emit_configuration(m)
+      notification_socket.emit(m)
     end
 
     def respond_with_worker_config(req)
@@ -180,14 +186,10 @@ module Pipeline::Rpc
       channel_entry = @backend_channels[channel]
       puts channel_entry.keys
       topics.each do |topic|
-        unless channel_entry.has_key?(topic)
-          puts "RESET #{topic}"
-          topic = "*"
-        end
+        next unless channel_entry.has_key?(topic)
         port = channel_entry[topic].port
         workqueue_addresses << "tcp://#{@public_hostname}:#{port}"
       end
-      workqueue_addresses.uniq!
 
       analyzer_spec[:channel] = {
         channel: channel,

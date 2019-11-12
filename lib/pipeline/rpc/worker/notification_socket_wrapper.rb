@@ -1,11 +1,13 @@
 module Pipeline::Rpc::Worker
   class NotificationSocketWrapper
 
-    attr_reader :socket, :channel
+    attr_reader :socket, :channel, :topic_scopes
 
-    def initialize(socket, channel)
+    def initialize(socket, channel, topic_scopes)
       @socket = socket
       @channel = channel
+      @topic_scopes = topic_scopes
+      @start_at = Time.now.to_i
     end
 
     def recv
@@ -17,11 +19,19 @@ module Pipeline::Rpc::Worker
       action = request["action"]
 
       if action == "configure"
-        a = Pipeline::Rpc::Worker::ConfigureAction.new(channel, request)
+
+        force_restart_at = request["force_restart_at"]
+        if force_restart_at && force_restart_at > @start_at
+          raise DaemonRestartException
+        end
+
+
+        a = Pipeline::Rpc::Worker::ConfigureAction.new(channel, request, topic_scopes)
         a.request = request
         a
       else
         puts "HERE ELSE: #{request}"
+        exit 1
       end
     end
 

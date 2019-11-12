@@ -11,6 +11,7 @@ gem "simplecov", require: false, group: :test
 
 gem "ffi-rzmq"
 gem "zeitwerk"
+gem "docopt"
 
 group :development, :test do
   # gem "bundler"

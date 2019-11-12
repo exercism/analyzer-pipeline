@@ -1,5 +1,8 @@
 module Pipeline::Rpc::Worker
 
+  class DaemonRestartException < StandardError
+  end
+
   class Daemon
 
     attr_reader :identity, :context, :incoming, :outgoing, :environment
@@ -18,6 +21,7 @@ module Pipeline::Rpc::Worker
         query = CGI::parse(channel_address.query)
         @topics = query["topic"] if query["topic"]
       end
+      @topics = ["*"] if @topics.nil? || @topics.empty?
 
       @context = ZMQ::Context.new(1)
       @incoming = context.socket(ZMQ::PULL)
@@ -26,7 +30,14 @@ module Pipeline::Rpc::Worker
       @environment = Pipeline::Runtime::RuntimeEnvironment.new(env_base)
     end
 
-    def setup
+    def bootstrap_and_listen
+      bootstrap
+      configure
+      connect
+      poll_messages
+    end
+
+    def bootstrap
       @setup = context.socket(ZMQ::REQ)
       @setup.setsockopt(ZMQ::LINGER, 0)
       puts @control_queue
@@ -39,41 +50,48 @@ module Pipeline::Rpc::Worker
       @setup.send_string(request.to_json)
       msg = ""
       @setup.recv_string(msg)
-      msg = JSON.parse(msg)
-      puts "Bootstrap with #{msg}"
-
+      @bootstrap = JSON.parse(msg)
+      puts "Bootstrap with #{JSON.pretty_generate(@bootstrap)}"
       @setup.close
+    end
 
+    def configure
       environment.prepare
-
-      action = Pipeline::Rpc::Worker::ConfigureAction.new(@channel, msg)
+      action = Pipeline::Rpc::Worker::ConfigureAction.new(@channel, @bootstrap, @topics)
       action.environment = environment
       action.invoke
+    end
 
-      response_address = msg["channel"]["response_address"]
-      workqueue_addresses = msg["channel"]["workqueue_addresses"]
-      notification_address = msg["channel"]["notification_address"]
+    def listen
+      connect
+      poll_messages
+    end
+
+    private
+
+    def connect
+      channel_defn = @bootstrap["channel"]
+      response_address = channel_defn["response_address"]
+      workqueue_addresses  =channel_defn["workqueue_addresses"]
+      notification_address = channel_defn["notification_address"]
       @outgoing = context.socket(ZMQ::PUB)
       @outgoing.connect(response_address)
       workqueue_addresses.each do |workqueue_address|
         incoming.connect(workqueue_address)
       end
       @notifications.connect(notification_address)
-    end
-
-    def listen
-      setup
 
       @incoming_wrapper = Pipeline::Rpc::Worker::WorkSocketWrapper.new(incoming)
-      @noificationincoming_wrapper = Pipeline::Rpc::Worker::NotificationSocketWrapper.new(@notifications, @channel)
+      @noificationincoming_wrapper = Pipeline::Rpc::Worker::NotificationSocketWrapper.new(@notifications, @channel, @topics)
 
       @poller = Pipeline::Rpc::ChannelPoller.new
       @poller.register(@incoming_wrapper)
       @poller.register(@noificationincoming_wrapper)
+    end
 
+    def poll_messages
       loop do
         msg = []
-
         @poller.listen_for_messages do |action_task|
           unless action_task.nil?
             action_task.environment = environment
@@ -84,7 +102,6 @@ module Pipeline::Rpc::Worker
             end
           end
         end
-
       end
     end
 
