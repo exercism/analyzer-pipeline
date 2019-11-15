@@ -8,7 +8,7 @@ module Pipeline::Rpc::Worker
       @topic_scopes = topic_scopes
     end
 
-    def invoke      
+    def invoke
       spec = request["specs"][@channel]
       puts "Configuing #{@channel} with #{spec}"
       credentials = parse_credentials(request)

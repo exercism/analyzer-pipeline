@@ -46,7 +46,7 @@ module Pipeline::Rpc::Worker
       @setup.send_string(request.to_json)
       msg = ""
       @setup.recv_string(msg)
-      @bootstrap = JSON.parse(msg)
+      @bootstrap = JSON.parse(msg)["result"]
       puts "Bootstrap with #{JSON.pretty_generate(@bootstrap)}"
       @setup.close
     end

@@ -13,15 +13,48 @@ module Pipeline::Rpc
       @raw_address = msg_strings[0]
       @raw_msg = msg_strings[2]
       @socket = socket
+      @start = current_timestamp
     end
 
-    def send_error(err)
-      reply = [raw_address, "", err.to_json]
-      @socket.send_strings(reply)
+    def send_error(err, status_code=999)
+      msg = {
+        status: {
+          ok: false,
+          status_code: status_code
+        },
+        error: err,
+        failed_request: parsed_msg
+      }
+      send_reply(msg)
     end
 
-    def send_result(result)
-      reply = [raw_address, "", result.to_json]
+    def send_result(result, status_code=0)
+      msg = {
+        status: {
+          ok: true,
+          status_code: status_code
+        },
+        result: result,
+        timing: {
+          start_time: @start.to_i
+        }
+      }
+      send_reply(msg)
+    end
+
+    def current_timestamp
+      (Time.now.to_f * 1000)
+    end
+
+    def send_reply(msg)
+      @end = current_timestamp
+      @duration_milliseconds = @end - @start
+      msg[:timing] = {
+        start_time: @start.to_i,
+        end_time:  @end.to_i,
+        duration_milliseconds: @duration_milliseconds.to_i
+      }
+      reply = [raw_address, "", msg.to_json]
       @socket.send_strings(reply)
     end
 

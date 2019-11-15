@@ -16,13 +16,13 @@ loader.setup
 
 module Pipeline
 
-  def self.load_config(config_path)
-    config = YAML.load(File.read(config_path))
-    Aws.config.update({
-       credentials: Aws::Credentials.new(config["aws_access_key_id"], config["aws_secret_access_key"])
-    })
-    @config = config
-  end
+  # def self.load_config(config_path)
+  #   config = YAML.load(File.read(config_path))
+  #   Aws.config.update({
+  #      credentials: Aws::Credentials.new(config["aws_access_key_id"], config["aws_secret_access_key"])
+  #   })
+  #   @config = config
+  # end
 
   def self.config
     @config

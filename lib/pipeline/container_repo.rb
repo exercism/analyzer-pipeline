@@ -44,9 +44,23 @@ class Pipeline::ContainerRepo
   end
 
   def list_images
+    puts "credentials #{@credentials}"
+    puts "ECR #{ecr}"
+    puts create_login_token
     ecr.list_images({
       repository_name: image_name
     })
+  end
+
+
+  def images_info
+    images = list_images()
+    info = {}
+    images.image_ids.each do |image|
+      info[image.image_digest] ||= []
+      info[image.image_digest] << image.image_tag
+    end
+    info
   end
 
   def git_shas
@@ -65,10 +79,9 @@ class Pipeline::ContainerRepo
 
   def ecr
     @ecr ||= begin
-      Aws::ECR::Client.new(
-        region: 'eu-west-1',
-        credentials: @credentials
-      )
+      ( @credentials.nil? ) ?
+        Aws::ECR::Client.new(region: 'eu-west-1') :
+        Aws::ECR::Client.new(region: 'eu-west-1', credentials: @credentials)
     end
   end
 

@@ -9,7 +9,6 @@ module Pipeline::Rpc
       @notification_port = 5557
       @front_end_port = 5555
 
-
       @zmq_context = zmq_context
 
       @front_end = FrontEndSocket.new(zmq_context, @front_end_port)
@@ -22,27 +21,8 @@ module Pipeline::Rpc
       @in_flight_requests = RequestRegister.new
 
       @backend_channels = {}
-
-      # @work_channel_ports = {
-      #   static_analyzers: {
-      #     "*" => 5560
-      #   },
-      #   test_runners: {
-      #     "*" => 5561,
-      #     "ruby" => 33001,
-      #     "csharp" => 33002
-      #   },
-      #   representers: {
-      #     "*" => 5562
-      #   }
-      # }
-      @work_channel_ports = {}
-      @container_versions = {}
-
       config["workers"].each do |worker_class, worker_config|
         worker_class = worker_class.to_sym
-        c = @work_channel_ports[worker_class] = {}
-        cv = @container_versions[worker_class] = {}
         backend = @backend_channels[worker_class] = {}
         worker_config.each do |k,v|
           if k == "shared_queue"
@@ -50,9 +30,7 @@ module Pipeline::Rpc
             port = v
           else
             topic = k
-            lang_spec = v
             port = v["queue"]
-            cv[k] = v["worker_versions"]
           end
           bind_address = "tcp://*:#{port}"
           work_channel = WorkChannel.new(zmq_context, bind_address)
@@ -60,27 +38,25 @@ module Pipeline::Rpc
         end
       end
 
-      # @work_channel_ports.each do |type, entry|
-      #   backend = @backend_channels[type] = {}
-      #   entry.each do |topic, port|
-      #     bind_address = "tcp://*:#{port}"
-      #     work_channel = WorkChannel.new(zmq_context, bind_address)
-      #     backend[topic] = work_channel
-      #   end
-      # end
+      @container_versions = {}
+      config["workers"].each do |worker_class, worker_config|
+        worker_class = worker_class.to_sym
+        cv = @container_versions[worker_class] = {}
+        worker_config.each do |k,v|
+          if k != "shared_queue"
+            lang_spec = v
+            cv[k] = lang_spec["worker_versions"]
+          end
+        end
+      end
 
       @notification_socket = NotificationSocket.new(zmq_context, @notification_port)
-    end
-
-    def force_worker_restart!
-      @force_restart_at = Time.now
     end
 
     def run
       Thread.new do
         response_socket.run_heartbeater
       end
-
 
       poller.listen_for_messages do |msg|
         case msg
@@ -90,6 +66,10 @@ module Pipeline::Rpc
           on_service_response(msg)
         end
       end
+    end
+
+    def force_worker_restart!
+      @force_restart_at = Time.now
     end
 
     private
@@ -107,7 +87,6 @@ module Pipeline::Rpc
       end
     end
 
-
     def on_frontend_request(req)
       req.handle do |action|
         if action == "configure_worker"
@@ -118,6 +97,23 @@ module Pipeline::Rpc
           handle_with_worker(:test_runners, req)
         elsif action == "represent"
           handle_with_worker(:representers, req)
+        elsif action == "restart_workers"
+          force_worker_restart!
+          req.send_result({ message: "Request accepted" })
+        elsif action == "restart_router"
+          force_worker_restart!
+          req.send_result({ message: "Request accepted" })
+        elsif action == "current_config"
+          req.send_result({ container_versions: container_versions })
+        elsif action == "list_available_containers"
+          channel = req.parsed_msg["channel"]
+          track_slug = req.parsed_msg["track_slug"]
+          c = temp_credentials
+          puts "C #{c}"
+          credentials = to_aws_credentials(c)
+          container_repo = Pipeline::Runtime::RuntimeEnvironment.container_repo(channel, track_slug, nil)
+          images = container_repo.images_info
+          req.send_result({ list_images: images })
         else
           req.send_error({ status: :unrecognised_action })
         end
@@ -125,6 +121,13 @@ module Pipeline::Rpc
     end
 
     private
+
+    def to_aws_credentials(raw_credentials)
+      key = raw_credentials["access_key_id"]
+      secret = raw_credentials["secret_access_key"]
+      session = raw_credentials["session_token"]
+      Aws::Credentials.new(key, secret, session)
+    end
 
     def handle_with_worker(worker_class, req)
       channel = @backend_channels[worker_class]
@@ -155,32 +158,6 @@ module Pipeline::Rpc
       @in_flight_requests.register(req)
       backend.forward_to_backend(req, context)
     end
-
-    # def container_versions
-    #   @container_versions
-    #   # {
-    #   #   static_analyzers: {
-    #   #     "ruby" => [
-    #   #       "a1f5549b6391443f7a05a038fed8dfebacd3db84",
-    #   #       "398007701db580a09f198e806e680f4cdb04b3b4",
-    #   #       "dc1c6c4897e63ebeb60ed53ec7423a3f6c33449d"
-    #   #     ]
-    #   #   },
-    #   #   representers: {
-    #   #     "ruby" => [
-    #   #       "7dad3dd8b43c89d0ac03b5f67700c6aad52d8cf9"
-    #   #     ]
-    #   #   },
-    #   #   test_runners: {
-    #   #     "ruby" => [
-    #   #       "b6ea39ccb2dd04e0b047b25c691b17d6e6b44cfb"
-    #   #     ],
-    #   #     "csharp" => [
-    #   #       "sha-122a036658c815c2024c604046692adc4c23d5c1"
-    #   #     ]
-    #   #   }
-    #   # }
-    # end
 
     def emit_current_spec
       m = {

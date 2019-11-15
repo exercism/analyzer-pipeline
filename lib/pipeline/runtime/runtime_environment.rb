@@ -1,6 +1,20 @@
 module Pipeline::Runtime
   class RuntimeEnvironment
 
+    def self.container_repo(channel, language_slug, credentials)
+      container_slug = case channel
+      when "static_analyzers"
+        "#{language_slug}-analyzer"
+      when "test_runners"
+        "#{language_slug}-test-runner"
+      when "representers"
+        "#{language_slug}-representer"
+      else
+        raise "Unknown channel: #{channel}"
+      end
+      Pipeline::ContainerRepo.instance_for(container_slug, credentials)
+    end
+
     attr_reader :env_base
 
     def initialize(env_base)
@@ -18,19 +32,7 @@ module Pipeline::Runtime
     end
 
     def release(channel, language_slug, version, credentials)
-      container_slug = case channel
-      when "static_analyzers"
-        "#{language_slug}-analyzer"
-      when "test_runners"
-        "#{language_slug}-test-runner"
-      when "representers"
-        "#{language_slug}-representer"
-      # when "static_analyzers"
-      #   container_slug = "#{language_slug}-analyzer"
-      else
-        raise "Unknown channel: #{channel}"
-      end
-      container_repo = Pipeline::ContainerRepo.instance_for(container_slug, credentials)
+      container_repo = RuntimeEnvironment.container_repo(channel, language_slug, credentials)
       release_container(language_slug, version, container_repo)
     end
 

@@ -43,14 +43,11 @@ module Pipeline::Cmd
         context = ZMQ::Context.new
 
         config = YAML.load(File.read(config_file))
-        
+
         Aws.config.update({
            credentials: Aws::Credentials.new(config["aws_access_key_id"], config["aws_secret_access_key"])
         })
-        # puts config
-        # exit
-        #
-        # Pipeline.load_config(config_file)
+
         Pipeline::Rpc::Router.new(context, config)
       end
     end

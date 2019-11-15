@@ -25,7 +25,6 @@ module Pipeline::Rpc::Worker
           raise DaemonRestartException
         end
 
-
         a = Pipeline::Rpc::Worker::ConfigureAction.new(channel, request, topic_scopes)
         a.request = request
         a
