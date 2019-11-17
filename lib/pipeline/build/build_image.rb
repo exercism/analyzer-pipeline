@@ -15,7 +15,7 @@ module Pipeline::Build
 
     def checkout
       target_sha = repo.checkout(build_tag)
-      @target_sha = "sha-#{target_sha}"
+      @target_sha = "git-#{target_sha}"
     end
 
     def build

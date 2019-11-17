@@ -1,16 +1,16 @@
 module Pipeline::Rpc
 
   class Router
-    attr_reader :zmq_context, :poller, :response_socket, :notification_socket, :container_versions
+    attr_reader :zmq_context, :poller, :response_socket, :notification_socket, :container_versions, :config
 
     def initialize(zmq_context, config)
+      @zmq_context = zmq_context
+      @config = config
+
       @public_hostname = Socket.gethostname
       @response_port = 5556
       @notification_port = 5557
       @front_end_port = 5555
-      # @builder_port = 5557
-
-      @zmq_context = zmq_context
 
       @front_end = FrontEndSocket.new(zmq_context, @front_end_port)
       @response_socket = ResponseSocket.new(zmq_context, @response_port)
@@ -22,7 +22,7 @@ module Pipeline::Rpc
       @in_flight_requests = RequestRegister.new
 
       @backend_channels = {}
-      config["workers"].each do |worker_class, worker_config|
+      config.each_worker do |worker_class, worker_config|
         worker_class = worker_class.to_sym
         backend = @backend_channels[worker_class] = {}
         worker_config.each do |k,v|
@@ -39,21 +39,7 @@ module Pipeline::Rpc
         end
       end
 
-      # @builder_channel = {
-      #   "*" => WorkChannel.new(zmq_context, "tcp://*:#{@builder_port}")
-      # }
-
-      @container_versions = {}
-      config["workers"].each do |worker_class, worker_config|
-        worker_class = worker_class.to_sym
-        cv = @container_versions[worker_class] = {}
-        worker_config.each do |k,v|
-          if k != "shared_queue"
-            lang_spec = v
-            cv[k] = lang_spec["worker_versions"]
-          end
-        end
-      end
+      load_container_versions!
 
       @notification_socket = NotificationSocket.new(zmq_context, @notification_port)
     end
@@ -78,6 +64,20 @@ module Pipeline::Rpc
     end
 
     private
+
+    def load_container_versions!
+      @container_versions = {}
+      config.each_worker do |worker_class, worker_config|
+        worker_class = worker_class.to_sym
+        cv = @container_versions[worker_class] = {}
+        worker_config.each do |k,v|
+          if k != "shared_queue"
+            lang_spec = v
+            cv[k] = lang_spec["worker_versions"]
+          end
+        end
+      end
+    end
 
     def on_service_response(msg)
       if msg.type == "response"
@@ -112,6 +112,8 @@ module Pipeline::Rpc
           req.send_result({ message: "Request accepted" })
         elsif action == "current_config"
           req.send_result({ container_versions: container_versions })
+        elsif action == "update_container_versions"
+          update_container_versions(req)
         elsif action == "list_available_containers"
           channel = req.parsed_msg["channel"]
           track_slug = req.parsed_msg["track_slug"]
@@ -126,8 +128,6 @@ module Pipeline::Rpc
         end
       end
     end
-
-    private
 
     def to_aws_credentials(raw_credentials)
       key = raw_credentials["access_key_id"]
@@ -146,7 +146,6 @@ module Pipeline::Rpc
     end
 
     def select_channel(worker_class)
-      # return @builder_channel if worker_class == :builders
       @backend_channels[worker_class]
     end
 
@@ -209,6 +208,19 @@ module Pipeline::Rpc
       }
       analyzer_spec["credentials"] = temp_credentials
       req.send_result(analyzer_spec)
+    end
+
+    def update_container_versions(req)
+      channel = req.parsed_msg["channel"]
+      if channel.nil?
+        req.send_error({ msg: "channel unknown" })
+        return
+      end
+      track_slug = req.parsed_msg["track_slug"]
+      versions = req.parsed_msg["versions"]
+      config.update_container_versions!(channel, track_slug, versions)
+      load_container_versions!
+      req.send_result({ container_versions: container_versions })
     end
 
     def set_temp_credentials(msg)

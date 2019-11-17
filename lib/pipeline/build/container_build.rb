@@ -76,7 +76,11 @@ module Pipeline::Build
     end
 
     def publish
-      Pipeline::Build::PublishImage.(img, container_repo, local_tag, build_tag)
+      human_tag = build_tag
+      if repo.valid_commit?(build_tag)
+        human_tag = nil
+      end
+      Pipeline::Build::PublishImage.(img, container_repo, local_tag, human_tag)
     end
 
     def image_name

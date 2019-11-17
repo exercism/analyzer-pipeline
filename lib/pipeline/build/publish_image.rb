@@ -55,9 +55,14 @@ module Pipeline::Build
       "#{repository_url}:latest"
     end
 
-    memoize
     def remote_tag_timestamped
-      "#{remote_tag}-#{Time.now.to_i}"
+      tag = local_tag.gsub(/git-/, "build-")
+      "#{repository_url}:#{tag}-#{build_timestamp}"
+    end
+
+    memoize
+    def build_timestamp
+      Time.now.to_i
     end
 
   end

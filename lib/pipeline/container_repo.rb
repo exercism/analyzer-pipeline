@@ -70,8 +70,8 @@ class Pipeline::ContainerRepo
       tag = image.image_tag
       next if tag.nil?
       # Only return git-based shas
-      if tag.start_with?("sha-")
-        tag = tag.gsub(/sha-/, "")
+      if tag.start_with?("git-")
+        tag = tag.gsub(/git-/, "")
         tags << tag unless tag.include?("-")
       end
     end

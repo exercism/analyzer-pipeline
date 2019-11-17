@@ -8,7 +8,7 @@ module Pipeline::Cmd
     Exercism router.
 
     Usage:
-      #{__FILE__} <configuration_file> [--force-worker-restart]
+      #{__FILE__} <configuration_file> [--seed=<seed_configuration] [--force-worker-restart]
       #{__FILE__} -h | --help
       #{__FILE__} --version
 
@@ -40,13 +40,15 @@ module Pipeline::Cmd
     def router
       @router ||= begin
         config_file = options["<configuration_file>"]
+        unless File.file?(config_file)
+          seed = options["--seed"]
+          puts "Seeding config from #{seed}"
+          FileUtils.cp(seed, config_file)
+        end
+        config = Pipeline::Config.new(config_file)
+        config.seed_aws!
+
         context = ZMQ::Context.new
-
-        config = YAML.load(File.read(config_file))
-
-        Aws.config.update({
-           credentials: Aws::Credentials.new(config["aws_access_key_id"], config["aws_secret_access_key"])
-        })
 
         Pipeline::Rpc::Router.new(context, config)
       end
