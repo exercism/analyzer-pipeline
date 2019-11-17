@@ -7,8 +7,10 @@ module Pipeline::Build
     initialize_with :build_tag, :track_slug, :repo, :container_repo
 
     def call
+      puts "Setting up utilities"
       setup_utilities
       setup_remote_repo
+      fetch_code
       check_tag_exists
       if already_built?
         puts "already_built"
@@ -34,6 +36,10 @@ module Pipeline::Build
       }
     end
 
+    def fetch_code
+      repo.fetch!
+    end
+
     def setup_utilities
       @logs = Pipeline::Util::LogCollector.new
       @img = Pipeline::Util::ImgWrapper.new(@logs)
@@ -45,6 +51,7 @@ module Pipeline::Build
 
     def check_tag_exists
       return if build_tag == "master"
+      return if repo.valid_commit?(build_tag)
       raise "Build tag does not exist" unless repo.tags[build_tag]
     end
 
@@ -55,7 +62,6 @@ module Pipeline::Build
       puts "current: #{@container_repo.git_shas}"
       puts "repo: #{repo}"
       current_tags = @container_repo.git_shas
-      repo.fetch!
       target_sha = repo.checkout(build_tag)
       puts target_sha
       current_tags.include? target_sha
@@ -67,7 +73,6 @@ module Pipeline::Build
     end
 
     def validate
-      Pipeline::Validation::ValidateBuild.(image_tag, "fixtures/#{track_slug}")
     end
 
     def publish

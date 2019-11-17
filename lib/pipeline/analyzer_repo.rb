@@ -18,13 +18,25 @@ class Pipeline::AnalyzerRepo
     repo.fetch('origin')
   end
 
+  def valid_commit?(reference)
+    return false unless reference.match? /^[0-9a-f]{40}$/
+    repo.exists?(reference)
+  end
+
   def checkout(ref)
     if tags[ref]
       oid = tags[ref]
       repo.checkout(oid)
       return oid
+    elsif valid_commit?(ref)
+      repo.checkout(ref)
+      repo.reset(ref, :hard)
+      return ref
     else
+      puts "checkout #{ref}"
       ref_pointer = repo.checkout(ref)
+      puts "repo #{repo_dir}"
+      puts ref_pointer
       return ref_pointer.target.target.oid
     end
   end

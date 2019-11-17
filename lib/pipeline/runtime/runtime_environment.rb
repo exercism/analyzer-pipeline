@@ -2,17 +2,32 @@ module Pipeline::Runtime
   class RuntimeEnvironment
 
     def self.container_repo(channel, language_slug, credentials)
+      suffix = "-dev" unless ENV["env"] == "production"
       container_slug = case channel
       when "static_analyzers"
-        "#{language_slug}-analyzer"
+        "#{language_slug}-analyzer#{suffix}"
       when "test_runners"
-        "#{language_slug}-test-runner"
+        "#{language_slug}-test-runner#{suffix}"
       when "representers"
-        "#{language_slug}-representer"
+        "#{language_slug}-representer#{suffix}"
       else
         raise "Unknown channel: #{channel}"
       end
       Pipeline::ContainerRepo.instance_for(container_slug, credentials)
+    end
+
+    def self.source_repo(channel, language_slug)
+      suffix = case channel
+      when "static_analyzers"
+        "analyzer"
+      when "test_runners"
+        "test-runner"
+      when "representers"
+        "representer"
+      else
+        raise "Unknown channel: #{channel}"
+      end
+      Pipeline::AnalyzerRepo.for_track(language_slug, suffix)
     end
 
     attr_reader :env_base

@@ -8,6 +8,7 @@ module Pipeline::Rpc
       @response_port = 5556
       @notification_port = 5557
       @front_end_port = 5555
+      # @builder_port = 5557
 
       @zmq_context = zmq_context
 
@@ -37,6 +38,10 @@ module Pipeline::Rpc
           backend[topic] = work_channel
         end
       end
+
+      # @builder_channel = {
+      #   "*" => WorkChannel.new(zmq_context, "tcp://*:#{@builder_port}")
+      # }
 
       @container_versions = {}
       config["workers"].each do |worker_class, worker_config|
@@ -97,6 +102,8 @@ module Pipeline::Rpc
           handle_with_worker(:test_runners, req)
         elsif action == "represent"
           handle_with_worker(:representers, req)
+        elsif action == "build_container"
+          handle_with_worker(:builders, req)
         elsif action == "restart_workers"
           force_worker_restart!
           req.send_result({ message: "Request accepted" })
@@ -130,7 +137,7 @@ module Pipeline::Rpc
     end
 
     def handle_with_worker(worker_class, req)
-      channel = @backend_channels[worker_class]
+      channel = select_channel(worker_class)
       if channel.nil?
         req.send_error({ status: :worker_class_unknown })
       else
@@ -138,15 +145,20 @@ module Pipeline::Rpc
       end
     end
 
+    def select_channel(worker_class)
+      # return @builder_channel if worker_class == :builders
+      @backend_channels[worker_class]
+    end
+
     def select_backend_and_forward(req, channel)
       track_slug = req.parsed_msg["track_slug"]
       backend = channel[track_slug]
-      if backend.worker_available?
+      if backend && backend.worker_available?
         forward(backend, req)
         return
       end
       backend = channel["*"]
-      if backend.worker_available?
+      if backend && backend.worker_available?
         forward(backend, req)
       else
         req.send_error({ status: :worker_unavailable })
@@ -182,11 +194,7 @@ module Pipeline::Rpc
       topics = req.parsed_msg["topics"] || ["*"]
       workqueue_addresses = []
 
-      puts channel
-      puts @backend_channels.keys
-      puts "------"
       channel_entry = @backend_channels[channel]
-      puts channel_entry.keys
       topics.each do |topic|
         next unless channel_entry.has_key?(topic)
         port = channel_entry[topic].port

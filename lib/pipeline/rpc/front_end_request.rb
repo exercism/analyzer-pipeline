@@ -46,6 +46,11 @@ module Pipeline::Rpc
       (Time.now.to_f * 1000)
     end
 
+    def default_timeout
+      return 300 if parsed_msg["action"] == "build_container"
+      5
+    end
+
     def send_reply(msg)
       @end = current_timestamp
       @duration_milliseconds = @end - @start

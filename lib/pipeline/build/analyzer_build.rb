@@ -5,6 +5,10 @@ module Pipeline::Build
       suffix = "-dev" unless ENV["env"] == "production"
       "#{track_slug}-analyzer#{suffix}"
     end
-    
+
+    def validate
+      Pipeline::Validation::ValidateBuild.(image_tag, "fixtures/#{track_slug}")
+    end
+
   end
 end

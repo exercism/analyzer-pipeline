@@ -6,7 +6,8 @@ module Pipeline::Rpc
     end
 
     def register(req)
-      timeout_at = Time.now.to_i + 5
+      timeout_seconds = req.default_timeout
+      timeout_at = Time.now.to_i + timeout_seconds
       @in_flight[req.raw_address] = {timeout: timeout_at, req: req}
     end
 

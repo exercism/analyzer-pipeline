@@ -24,6 +24,8 @@ module Pipeline::Rpc::Worker
         RepresentAction.new(request, return_address)
       elsif action == "test_solution"
         TestRunnerAction.new(request, return_address)
+      elsif action == "build_container"
+        BuildContainerAction.new(request, return_address)
       else
         puts "HERE ELSE: #{request}"
       end
