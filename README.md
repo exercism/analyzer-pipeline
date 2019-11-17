@@ -57,3 +57,50 @@ The router should load balance, so if we're seeing a lot of ruby traffic, we mig
 ```
 $> bundle exec bin/worker listen worker-3 tcp://localhost:5555/test_runners?topic=ruby /tmp/envs-w3
 ```
+
+## Versioning containers for running
+
+As it currently stands, it's possible to build from an arbitrary git-sha, the 'master' branch, or a tag. Built containers
+are referenced by a Docker tag of the form `git-SHA1_OF_GIT_COMMIT` and calling client code can request the version
+that a job (e.g. a test run) should run with. It is expected that the orchestration of deciding what container is 'live'
+will be external to the router process.
+
+## Building example
+
+To build a container version, submit a message of the form
+
+```json
+{
+      "action": "build_container",
+      "track_slug": "ruby",
+      "channel": "test_runners",
+      "git_reference": "REF"
+}
+```
+
+Then, once built, it should be possible to request it to be deployed
+
+```json
+{
+      "action": "deploy_container_version",
+      "track_slug": "ruby",
+      "channel": "test_runners",
+      "new_version": "git-xxxxxxxxx"
+}
+```
+
+The deployment may take a little while as each worker is asynchronous, however
+within a few seconds it should be possible to then invoke it. e.g.
+
+```json
+{
+    "action": "test_solution",
+    "id": "RUN_IDENTIFIER",
+    "track_slug": "ruby",
+    "exercise_slug": "two-fer",
+    "s3_uri": "s3://path/to/input/files/",
+    "container_version": "git-xxxxxxxxx"
+}
+```
+
+Ruby bindings for a 'pipeline client' are being built for integration
