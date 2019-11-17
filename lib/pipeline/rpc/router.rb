@@ -114,6 +114,8 @@ module Pipeline::Rpc
           req.send_result({ container_versions: container_versions })
         elsif action == "update_container_versions"
           update_container_versions(req)
+        elsif action == "deploy_container_version"
+          update_container_versions(req)
         elsif action == "list_available_containers"
           channel = req.parsed_msg["channel"]
           track_slug = req.parsed_msg["track_slug"]
@@ -217,8 +219,17 @@ module Pipeline::Rpc
         return
       end
       track_slug = req.parsed_msg["track_slug"]
-      versions = req.parsed_msg["versions"]
-      config.update_container_versions!(channel, track_slug, versions)
+      # TODO error if args are bad
+      if req.parsed_msg["action"] == "update_container_versions"
+        versions = req.parsed_msg["versions"]
+        config.update_container_versions!(channel, track_slug, versions)
+      elsif req.parsed_msg["action"] == "deploy_container_version"
+        new_version = req.parsed_msg["new_version"]
+        config.add_container_version!(channel, track_slug, new_version)
+      else
+        req.send_error({ msg: "action unknown" })
+        return
+      end
       load_container_versions!
       req.send_result({ container_versions: container_versions })
     end

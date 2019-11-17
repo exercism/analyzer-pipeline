@@ -34,6 +34,23 @@ class Pipeline::Config
     save_config(current)
   end
 
+  def add_container_version!(worker_class, track_slug, new_version)
+    current = config.to_h
+    workers = current["workers"]
+    raise "No worker config" if workers.nil?
+    class_config = workers[worker_class]
+    raise "No worker class config for #{worker_class}" if class_config.nil?
+    track_config = class_config[track_slug]
+    raise "No track config for #{worker_class}:#{track_slug}" if track_config.nil?
+    worker_versions = track_config["worker_versions"]
+    versions = worker_versions.clone
+    versions << new_version
+    versions.uniq!
+    track_config["old_worker_versions"] = worker_versions
+    track_config["worker_versions"] = versions
+    save_config(current)
+  end
+
   def save_config(updated_config)
     puts updated_config
     File.write(config_file, updated_config.to_yaml)
