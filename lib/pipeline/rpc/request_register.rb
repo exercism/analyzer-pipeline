@@ -18,6 +18,8 @@ module Pipeline::Rpc
         puts "dropping response"
       else
         req = entry[:req]
+        resp = msg.parsed_msg
+        resp.delete("return_address")
         req.send_result(msg.parsed_msg)
         unregister(addr)
       end

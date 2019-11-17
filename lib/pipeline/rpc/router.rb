@@ -226,6 +226,9 @@ module Pipeline::Rpc
       elsif req.parsed_msg["action"] == "deploy_container_version"
         new_version = req.parsed_msg["new_version"]
         config.add_container_version!(channel, track_slug, new_version)
+      elsif req.parsed_msg["action"] == "unload_container_version"
+        new_version = req.parsed_msg["new_version"]
+        req.send_error({ msg: "action not yet implemented" })
       else
         req.send_error({ msg: "action unknown" })
         return
