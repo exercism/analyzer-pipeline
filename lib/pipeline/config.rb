@@ -10,10 +10,24 @@ class Pipeline::Config
     Aws.config.update({
        credentials: Aws::Credentials.new(config["aws_access_key_id"], config["aws_secret_access_key"])
     })
+    puts "HERE"
+
   end
 
   def config
-    @config || YAML.load(File.read(config_file))
+    @config ||= begin
+       loaded_config = YAML.load(File.read(config_file))
+       loaded_config["workers"] ||= {}
+       loaded_config["workers"].each do |worker_class, worker_config|
+         raise "no default port for #{worker_class}" unless worker_config["shared_queue"]
+         worker_config.each do |entry, value|
+           next if entry == "shared_queue"
+           raise "no port for #{worker_class}:#{entry}" unless value["queue"]
+           value["worker_versions"] = [] if value["worker_versions"].nil?
+         end
+       end
+       loaded_config
+     end
   end
 
   def each_worker(&block)

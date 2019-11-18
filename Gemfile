@@ -7,8 +7,6 @@ gem "rugged"
 gem "aws-sdk-s3"
 gem "aws-sdk-ecr"
 
-gem "simplecov", require: false, group: :test
-
 gem "ffi-rzmq"
 gem "zeitwerk"
 gem "docopt"
@@ -18,4 +16,6 @@ group :development, :test do
   gem "rake"
   gem "mocha"
   gem "minitest"
+
+  gem "simplecov", require: false
 end
