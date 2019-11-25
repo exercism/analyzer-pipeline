@@ -25,10 +25,11 @@ module Pipeline::Rpc::Worker
       prepare_input unless @error
       run_container unless @error
 
-      response = {return_address: return_address}
+      response = {}
 
       if @error
         response[:msg_type] = :error_response
+        response[:return_address] = return_address
         response.merge(@error)
       else
         response[:msg_type] = :response
@@ -39,12 +40,22 @@ module Pipeline::Rpc::Worker
 
     def check_container
       log "Checking container"
-      unless environment.released?(track_slug, container_version)
-        msg = "Container #{track_slug}:#{container_version} isn't available"
+      begin
+        unless environment.released?(track_slug, container_version)
+          msg = "Container #{track_slug}:#{container_version} isn't available"
+          log msg
+          @error = {
+            status_code: 404,
+            error: msg
+          }
+        end
+      rescue => e
+        msg = "Failure accessing environment (during container check)"
         log msg
         @error = {
-          status_code: 404,
-          error: msg
+          status_code: 500,
+          error: msg,
+          detail: e
         }
       end
     end

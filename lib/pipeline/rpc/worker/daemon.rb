@@ -91,7 +91,14 @@ module Pipeline::Rpc::Worker
         @poller.listen_for_messages do |action_task|
           unless action_task.nil?
             action_task.environment = environment
-            result = action_task.invoke
+            result = nil
+            begin
+              result = action_task.invoke
+            rescue => e
+              puts "Error in invoke"
+              puts e.message
+              puts e.backtrace
+            end
             if result && result[:return_address]
               puts "RESULT #{result}"
               outgoing.send_string(result.to_json)
