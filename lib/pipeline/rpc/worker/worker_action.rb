@@ -15,6 +15,10 @@ module Pipeline::Rpc::Worker
       Aws::Credentials.new(key, secret, session)
     end
 
+    def log(message)
+      puts "** #{self.class.to_s} | #{message}"
+    end
+
   end
 
 end
