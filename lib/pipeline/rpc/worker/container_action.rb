@@ -120,7 +120,9 @@ module Pipeline::Rpc::Worker
       log "Syncing #{s3_uri} -> #{download_folder}"
       s3 = Aws::S3::Client.new(
         credentials: @aws_credentials,
-        region: "eu-west-1")
+        region: "eu-west-1",
+        http_idle_timeout: 0
+      )
       log "Created client"
       location_uri = URI(s3_uri)
       bucket = location_uri.host
