@@ -32,7 +32,7 @@ module Pipeline::Util
 
     def cmd
       if @timeout
-        "timeout -s 9 -k #{@timeout + 1} #{@timeout} #{cmd_string}"
+        "/usr/bin/timeout -s 9 -k #{@timeout + 1} #{@timeout} #{cmd_string}"
       else
         cmd_string
       end
