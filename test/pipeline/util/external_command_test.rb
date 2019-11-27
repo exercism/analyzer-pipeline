@@ -74,8 +74,54 @@ module Pipeline::Util
       cmd.suppress_output = true
       cmd.call
       refute cmd.success?
-      assert_equal 124, cmd.exit_status
+      assert_nil cmd.exit_status
     end
+
+    def test_stdout_hard_limit
+      cmd = ExternalCommand.new("/bin/sh -c \"echo 'hello'; sleep 4; echo 'world'\"")
+      cmd.suppress_output = true
+      cmd.stdout_limit = 4
+      cmd.call
+      refute cmd.success?
+      assert cmd.killed?
+      assert_equal "hello\n", cmd.stdout
+      assert_equal "", cmd.stderr
+    end
+
+    def test_hard_limits_for_real
+      verbose_command = 'perl -w -e \'$i = 0; while ($i<1000000) { print "x"; $i++ };  print "\n"; $i = 0; while ($i<10000) { print STDERR "y"; $i++ }\''
+
+      # Run without limits
+      cmd = ExternalCommand.new(verbose_command)
+      cmd.suppress_output = true
+      cmd.call
+      assert cmd.success?
+      refute cmd.killed?
+      assert_equal 1000001, cmd.stdout.size
+      assert_equal 10000, cmd.stderr.size
+
+      # limit stdout
+      cmd = ExternalCommand.new(verbose_command)
+      cmd.suppress_output = true
+      cmd.stdout_limit = 1000
+      cmd.call
+      refute cmd.success?
+      assert cmd.killed?
+      # should be truncated between block 1 and 2
+      assert cmd.stdout.size < 2000
+      assert_equal 0, cmd.stderr.size
+
+      # limit stderr
+      cmd = ExternalCommand.new(verbose_command)
+      cmd.suppress_output = true
+      cmd.stderr_limit = 1000
+      cmd.call
+      refute cmd.success?
+      assert cmd.killed?
+      assert_equal 1000001, cmd.stdout.size
+      assert cmd.stderr.size < 2000
+    end
+
 
   end
 end

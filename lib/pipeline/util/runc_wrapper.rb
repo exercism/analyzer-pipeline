@@ -14,6 +14,8 @@ module Pipeline::Util
 
       run_cmd = ExternalCommand.new("bash -x -c 'ulimit -v #{memory_limit}; #{binary_path} --root root-state run #{container_id}'")
       run_cmd.timeout = 5
+      run_cmd.stdout_limit = 1024*1024
+      run_cmd.stderr_limit = 1024*1024
 
       kill_cmd = ExternalCommand.new("#{binary_path} --root root-state kill #{container_id} KILL")
 
