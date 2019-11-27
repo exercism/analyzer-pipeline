@@ -18,6 +18,13 @@ module Pipeline::Util
       c = cmd
       puts "> #{c}"  unless suppress_output
       @stdout, @stderr, @status = Open3.capture3(c)
+      Open3.popen3("ls") do |stdout, stderr, status, thread|
+
+
+        @stdout = stdout.read
+        @stderr = stderr.read
+        @status = status
+      end
       puts "status: #{status}" unless suppress_output
       puts "stdout: #{stdout}" unless suppress_output
       puts "stderr: #{stderr}" unless suppress_output
@@ -25,7 +32,7 @@ module Pipeline::Util
 
     def cmd
       if @timeout
-        "timeout --foreground -s 9 -k #{@timeout + 1} #{@timeout} #{cmd_string}"
+        "timeout -s 9 -k #{@timeout + 1} #{@timeout} #{cmd_string}"
       else
         cmd_string
       end
