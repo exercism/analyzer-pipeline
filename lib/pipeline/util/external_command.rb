@@ -25,7 +25,7 @@ module Pipeline::Util
 
     def cmd
       if @timeout
-        "timeout --foreground -s 9 #{@timeout} -k #{@timeout} #{cmd_string}"
+        "timeout --foreground -s 9 -k #{@timeout + 1} #{@timeout} #{cmd_string}"
       else
         cmd_string
       end
