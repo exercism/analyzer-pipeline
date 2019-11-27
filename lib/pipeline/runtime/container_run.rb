@@ -32,6 +32,7 @@ module Pipeline::Runtime
       puts "Starting container invocation"
       container_driver = Pipeline::Util::ContainerDriver.new(runc, img, configurator, solution_dir)
       @result = container_driver.invoke(working_directory, args)
+      puts "Completed invocation"
       puts @logs.inspect
       {
         exercise_slug: exercise_slug,
