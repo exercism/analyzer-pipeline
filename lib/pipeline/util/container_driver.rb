@@ -38,7 +38,8 @@ module Pipeline::Util
       notifier = INotify::Notifier.new
       notifier.watch("#{workdir}/iteration", :moved_to, :create) do |event|
         puts "!!!!!!!!!!! #{event.name} is now in iteration!"
-        notifier.watch(event.name, :modify) do |event|
+        puts event
+        notifier.watch("{workdir}/iteration/#{event.name}", :modify) do |event|
           puts event
         end
       end
