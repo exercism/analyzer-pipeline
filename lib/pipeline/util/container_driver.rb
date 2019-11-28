@@ -35,7 +35,19 @@ module Pipeline::Util
     end
 
     def run_analyzer
+      notifier = INotify::Notifier.new
+      notifier.watch("iteration", :moved_to, :create) do |event|
+        puts "#{event.name} is now in iteration!"
+      end
+      notifier.watch("tmp", :moved_to, :create) do |event|
+        puts "#{event.name} is now in tmp!"
+      end
+      Thread.new do
+        notifier.run
+      end
       runc.run(workdir)
+      puts "ALL DONE"
+      notifier.stop
     end
 
     def run_analyzer_for(exercise_slug)

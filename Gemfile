@@ -10,6 +10,7 @@ gem "aws-sdk-ecr"
 gem "ffi-rzmq"
 gem "zeitwerk"
 gem "docopt"
+gem 'rb-inotify', '~> 0.9.7'
 
 group :development, :test do
   # gem "bundler"

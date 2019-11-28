@@ -55,6 +55,16 @@ module Pipeline::Util
               "type": "RLIMIT_NOFILE",
               "hard": 1024,
               "soft": 1024
+            },
+            {
+              "type": "RLIMIT_CPU",
+              "hard": 70,
+              "soft": 60
+            },
+            {
+              "type": "RLIMIT_RTTIME",
+              "hard": 70,
+              "soft": 60
             }
           ],
           "noNewPrivileges": true

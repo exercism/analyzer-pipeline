@@ -9,6 +9,7 @@ require 'aws-sdk-sts'
 require 'yaml'
 require 'json'
 require 'ffi-rzmq'
+require 'rb-inotifyq'
 
 require "zeitwerk"
 loader = Zeitwerk::Loader.for_gem
