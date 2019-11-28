@@ -36,10 +36,10 @@ module Pipeline::Util
 
     def run_analyzer
       notifier = INotify::Notifier.new
-      notifier.watch("iteration", :moved_to, :create) do |event|
+      notifier.watch("#{workdir}/iteration", :moved_to, :create) do |event|
         puts "#{event.name} is now in iteration!"
       end
-      notifier.watch("tmp", :moved_to, :create) do |event|
+      notifier.watch("#{workdir}/tmp", :moved_to, :create) do |event|
         puts "#{event.name} is now in tmp!"
       end
       Thread.new do
