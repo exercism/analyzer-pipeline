@@ -39,7 +39,7 @@ module Pipeline::Util
       notifier.watch("#{workdir}/iteration", :moved_to, :create) do |event|
         puts "!!!!!!!!!!! #{event.name} is now in iteration!"
         notifier.watch(event.absolute_name, :modify) do |event|
-          puts event
+          puts "!!!!!!!!!!! #{event.absolute_name} changed"
         end
       end
       notifier.watch("#{workdir}/tmp", :moved_to, :create) do |event|
