@@ -52,6 +52,8 @@ GEM
       aws-sdk-sns
       aws-sdk-sqs
     rake (12.3.3)
+    rb-inotify (0.9.10)
+      ffi (>= 0.5.0, < 2)
     rugged (0.28.2)
     simplecov (0.17.0)
       docile (~> 1.1)
@@ -77,6 +79,7 @@ DEPENDENCIES
   mocha
   propono
   rake
+  rb-inotify (~> 0.9.7)
   rugged
   simplecov
   zeitwerk
