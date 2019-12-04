@@ -12,7 +12,8 @@ module Pipeline::Util
     def run(container_folder)
       container_id = "analyzer-#{Time.now.to_i}"
 
-      run_cmd = ExternalCommand.new("bash -x -c 'ulimit -v #{memory_limit}; #{binary_path} --root root-state run #{container_id}'")
+      actual_command = "#{binary_path} --root root-state run #{container_id}"
+      run_cmd = ExternalCommand.new("bash -x -c 'ulimit -v #{memory_limit}; #{actual_command}'")
       run_cmd.timeout = 5
       run_cmd.stdout_limit = 1024*1024
       run_cmd.stderr_limit = 1024*1024
