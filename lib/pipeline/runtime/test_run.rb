@@ -6,7 +6,8 @@ module Pipeline::Runtime
     end
 
     def result
-      File.read("#{iteration_folder}/results.json")
+      raw_results = File.read("#{iteration_folder}/results.json")
+      JSON.parse(raw_results)
     end
 
     def working_directory

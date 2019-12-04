@@ -1,6 +1,28 @@
 module Pipeline::Rpc
   class FrontEndRequest
 
+    DEFAULT_RESPONSES = {
+
+      500 => "Internal platform Error",
+      501 => "Unrecognised_action",
+      502 => "Malformed request",
+      503 => "No worker available",
+      504 => "Request timed out while waiting for response from worker",
+
+      510 => "Worker error",
+      511 => "Container version is not available",
+      512 => "Failure in container setup",
+      513 => "Failuter in container invocation",
+      514 => "Output missing or malformed",
+
+      400 => "Bad input",
+      401 => "Forced exit. Container ran too long",
+      402 => "Forced exit. Container used too much IO",
+      403 => "Forced exit. Container was terminated early.",
+      
+      200 => "OK"
+    }
+
     def self.recv(socket)
       msg = []
       socket.recv_strings(msg)
@@ -14,32 +36,19 @@ module Pipeline::Rpc
       @raw_msg = msg_strings[2]
       @socket = socket
       @start = current_timestamp
+      @params_to_check = []
     end
 
-    def send_error(err, status_code=999)
-      msg = {
-        status: {
-          ok: false,
-          status_code: status_code
-        },
-        error: err,
-        failed_request: parsed_msg
-      }
-      send_reply(msg)
+    def send_error(msg, status_code, detail={})
+      status_code ||= 500
+      detail ||= {}
+      detail[:error] = msg
+      detail[:failed_request] = parsed_msg
+      send_reply(status_code, detail)
     end
 
-    def send_result(result, status_code=0)
-      msg = {
-        status: {
-          ok: true,
-          status_code: status_code
-        },
-        result: result,
-        timing: {
-          start_time: @start.to_i
-        }
-      }
-      send_reply(msg)
+    def send_result(result)
+      send_reply(200, result)
     end
 
     def current_timestamp
@@ -51,31 +60,98 @@ module Pipeline::Rpc
       5
     end
 
-    def send_reply(msg)
-      @end = current_timestamp
-      @duration_milliseconds = @end - @start
-      msg[:timing] = {
-        start_time: @start.to_i,
-        end_time:  @end.to_i,
-        duration_milliseconds: @duration_milliseconds.to_i
-      }
-      reply = [raw_address, "", msg.to_json]
-      @socket.send_strings(reply)
-    end
-
     def handle
       begin
         @parsed_msg = JSON.parse(raw_msg)
       rescue JSON::ParserError => e
-        req.send_error({ status: :parse_error })
+        puts e.message
+        detail = {
+          incoming: raw_msg
+        }
+        send_error("Could not parse message", 502, detail)
         return
       end
       action = @parsed_msg["action"]
       if action.nil?
-        req.send_error({ status: :no_action })
+        send_error("No action specified", 502)
       else
-        yield(action)
+        begin
+          yield(action)
+        rescue => e
+          puts e.message
+          detail = {
+            message: e.message,
+            trace: e.backtrace
+          }
+          send_error("Unhandled error", 500, detail)
+        end
       end
+    end
+
+    def ensure_param(param_name)
+      @params_to_check << param_name
+    end
+
+    def params_missing?
+      ! missing_params.empty?
+    end
+
+    def missing_params
+      @missing_params ||= begin
+        missing = []
+        @params_to_check.each do |param|
+          missing << param unless parsed_msg.include?(param)
+        end
+        missing
+      end
+    end
+
+    def merge_context!(context_to_merge)
+      context.merge!(context_to_merge)
+    end
+
+    private
+    def send_reply(status_code, payload)
+      msg = assemble_response(status_code, payload)
+      reply = [raw_address, "", msg.to_json]
+      @socket.send_strings(reply)
+    end
+
+    def assemble_response(status_code, payload)
+      @end = current_timestamp
+      @duration_milliseconds = @end - @start
+      context[:timing] = {
+        start_time: @start.to_i,
+        end_time:  @end.to_i,
+        duration_milliseconds: @duration_milliseconds.to_i
+      }
+      msg = {
+        status: status_for(status_code),
+        context: context
+      }
+      if status_code == 200
+        msg[:response] = payload
+      else
+        msg[:context][:error_detail] = payload
+        msg[:status][:error] = payload[:error] unless payload.nil?
+      end
+      msg
+    end
+
+    def context
+      @context ||= {}
+    end
+
+    def status_for(code)
+      textual_message = DEFAULT_RESPONSES[code]
+      if textual_message.nil?
+        group_code = (code.to_i / 100) * 100
+        textual_message = DEFAULT_RESPONSES[group_code]
+      end
+      {
+        status_code: code,
+        message: textual_message
+      }
     end
 
   end

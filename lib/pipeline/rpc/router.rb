@@ -81,9 +81,9 @@ module Pipeline::Rpc
 
     def on_service_response(msg)
       if msg.type == "response"
-        @in_flight_requests.forward_response(msg)
+        @in_flight_requests.forward_as_response(msg)
       elsif msg.type == "error_response"
-        @in_flight_requests.forward_response(msg)
+        @in_flight_requests.forward_as_error(msg)
       elsif msg.type == "heartbeat"
         @in_flight_requests.flush_expired_requests
         emit_current_spec
@@ -97,10 +97,25 @@ module Pipeline::Rpc
         if action == "configure_worker"
           respond_with_worker_config(req)
         elsif action == "analyze_iteration"
+          # TODO check mandatory args
+          req.ensure_param("id")
+          req.ensure_param("track_slug")
+          req.ensure_param("exercise_slug")
+          req.ensure_param("s3_uri")
+          req.ensure_param("container_version")
           handle_with_worker(:static_analyzers, req)
         elsif action == "test_solution"
+          req.ensure_param("id")
+          req.ensure_param("track_slug")
+          req.ensure_param("exercise_slug")
+          req.ensure_param("s3_uri")
+          req.ensure_param("container_version")
           handle_with_worker(:test_runners, req)
         elsif action == "represent"
+          # TODO check mandatory args
+          req.ensure_param("id")
+          req.ensure_param("track_slug")
+          req.ensure_param("container_version")
           handle_with_worker(:representers, req)
         elsif action == "build_container"
           handle_with_worker(:builders, req)
@@ -126,7 +141,7 @@ module Pipeline::Rpc
           images = container_repo.images_info
           req.send_result({ list_images: images })
         else
-          req.send_error({ status: :unrecognised_action })
+          req.send_error("Action <#{action}> unrecognised", 501)
         end
       end
     end
@@ -139,12 +154,20 @@ module Pipeline::Rpc
     end
 
     def handle_with_worker(worker_class, req)
+      if req.params_missing?
+        puts "MISSING"
+        error = {
+          missing_params: req.missing_params
+        }
+        req.send_error("Missing mandatory paraneters", 502, error)
+        return
+      end
       channel = select_channel(worker_class)
       if channel.nil?
-        req.send_error({ status: :worker_class_unknown })
-      else
-        select_backend_and_forward(req, channel)
+        req.send_error("worker_class <#{worker_class}> unrecognised", 502)
+        return
       end
+      select_backend_and_forward(req, channel)
     end
 
     def select_channel(worker_class)
@@ -162,7 +185,7 @@ module Pipeline::Rpc
       if backend && backend.worker_available?
         forward(backend, req)
       else
-        req.send_error({ status: :worker_unavailable })
+        req.send_error("No workers available for <#{track_slug}>", 503)
       end
     end
 

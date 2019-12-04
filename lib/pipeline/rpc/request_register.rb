@@ -11,7 +11,7 @@ module Pipeline::Rpc
       @in_flight[req.raw_address] = {timeout: timeout_at, req: req}
     end
 
-    def forward_response(msg)
+    def forward_as_error(msg)
       addr = msg.binary_return_address
       entry = @in_flight[addr]
       if entry.nil?
@@ -19,8 +19,29 @@ module Pipeline::Rpc
       else
         req = entry[:req]
         resp = msg.parsed_msg
+        resp.delete("msg_type")
         resp.delete("return_address")
-        req.send_result(msg.parsed_msg)
+        worker_error_code = resp.delete("worker_error_code") || 510
+        req.send_error("Error from worker", worker_error_code, resp)
+        unregister(addr)
+      end
+    end
+
+    def forward_as_response(msg)
+      addr = msg.binary_return_address
+      entry = @in_flight[addr]
+      if entry.nil?
+        puts "dropping response"
+      else
+        req = entry[:req]
+        resp = msg.parsed_msg
+        resp.delete("msg_type")
+        resp.delete("return_address")
+        container_response = resp.delete("result")
+        puts "keys: #{resp.keys}"
+        puts "Here: #{resp}"
+        req.merge_context!(resp)
+        req.send_result(container_response)
         unregister(addr)
       end
     end
@@ -33,7 +54,7 @@ module Pipeline::Rpc
         timed_out << entry[:req] if expiry < now
       end
       timed_out.each do |req|
-        req.send_error({status: :timeout})
+        req.send_error("Timed out request", 504)
         puts "Timing out #{req}"
         unregister(req.raw_address)
       end

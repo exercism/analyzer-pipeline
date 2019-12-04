@@ -45,7 +45,7 @@ module Pipeline::Rpc::Worker
           msg = "Container #{track_slug}:#{container_version} isn't available"
           log msg
           @error = {
-            status_code: 404,
+            worker_error_code: 511,
             error: msg
           }
         end
@@ -53,7 +53,7 @@ module Pipeline::Rpc::Worker
         msg = "Failure accessing environment (during container check)"
         log msg
         @error = {
-          status_code: 500,
+          worker_error_code: 512,
           error: msg,
           detail: e
         }
@@ -69,7 +69,7 @@ module Pipeline::Rpc::Worker
         msg = "Failure setting up job"
         log msg
         @error = {
-          status_code: 500,
+          worker_error_code: 512,
           error: msg,
           detail: e
         }
@@ -86,7 +86,7 @@ module Pipeline::Rpc::Worker
         msg = "Failure preparing input"
         log msg
         @error = {
-          status_code: 500,
+          worker_error_code: 512,
           error: msg,
           detail: e
         }
@@ -101,7 +101,7 @@ module Pipeline::Rpc::Worker
         msg = "Error from container"
         log msg
         @error = {
-          status_code: 500,
+          worker_error_code: 513,
           error: msg,
           detail: e
         }

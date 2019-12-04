@@ -46,7 +46,15 @@ module Pipeline::Rpc::Worker
       @setup.send_string(request.to_json)
       msg = ""
       @setup.recv_string(msg)
-      @bootstrap = JSON.parse(msg)["result"]
+      parsed_msg = JSON.parse(msg)
+      puts parsed_msg
+      status_code = parsed_msg["status"]["status_code"]
+      if status_code != 200
+        puts "Error when configuring"
+        puts "Recieved: #{msg}"
+        raise "Got status #{status_code} when trying to configure"
+      end
+      @bootstrap = parsed_msg["response"]
       puts "Bootstrap with #{JSON.pretty_generate(@bootstrap)}"
       @setup.close
     end
