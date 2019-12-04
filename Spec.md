@@ -33,12 +33,9 @@ Addtionally addition context may be returned
   },
   "response": { "data": "here" },
   "context": {
-    "logs": {
-      "stdout": "...",
-      "stderr": "..."
-    },
-    "container_exit_status": 0,
-    "invocation_info": {},
+    "logs": [],
+    "exit_status": 0,
+    "invocation": {},
     "timing": {}
   }
 }
@@ -56,12 +53,7 @@ e.g.
     "error": {...}    
   },
   "context": {
-    "logs": {
-      "stdout": "...",
-      "stderr": "..."
-    },
-    "container_exit_status": 0,
-    "invocation_info": {},
+    "error_detail": {},
     "timing": {}
   }
 }
