@@ -19,7 +19,7 @@ module Pipeline::Rpc
       401 => "Forced exit. Container ran too long",
       402 => "Forced exit. Container used too much IO",
       403 => "Forced exit. Container was terminated early.",
-      
+
       200 => "OK"
     }
 
@@ -113,6 +113,7 @@ module Pipeline::Rpc
     private
     def send_reply(status_code, payload)
       msg = assemble_response(status_code, payload)
+      puts ">>> #{msg}"
       reply = [raw_address, "", msg.to_json]
       @socket.send_strings(reply)
     end
