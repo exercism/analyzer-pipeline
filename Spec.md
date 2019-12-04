@@ -41,7 +41,7 @@ Addtionally addition context may be returned
 }
 ```
 
-For errored requests, the status hash may include additional structured information about the error
+For errored requests, the status hash may include additional structured information about the error (both in the status `error` field and also detailed within `context` .
 
 e.g. 
 
