@@ -98,3 +98,11 @@ It is expected that all 4xx error codes are context independent. Repeated submis
 ### Class IV - successful container run
 
  - 200 ok, successful invocation. There is a value in 'response', it may indicate a successful or failed or errored test run, but the platform considers the test_runner as having completed its work correctly. Data in response is ready for returning to upstream systems.
+ 
+### Class V - Consumer errors
+
+These errors are not sent back by the platform, but are instead are errors if the response from the platform cannot be processed.
+
+- 101 Client Timeout
+- 102 Missing response - The response from the platform was nil
+- 103 Malformed response - The response from the platform was malformed
