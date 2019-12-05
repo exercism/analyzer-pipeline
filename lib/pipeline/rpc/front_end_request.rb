@@ -12,7 +12,7 @@ module Pipeline::Rpc
       510 => "Worker error",
       511 => "Container version is not available",
       512 => "Failure in container setup",
-      513 => "Failuter in container invocation",
+      513 => "Failure in container invocation",
       514 => "Output missing or malformed",
 
       400 => "Bad input",
