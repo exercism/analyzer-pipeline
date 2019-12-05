@@ -56,12 +56,21 @@ module Pipeline::Util
       {
         cmd: cmd_string,
         success: success?,
-        stdout: stdout,
-        stderr: stderr
+        stdout: fix_encoding(stdout),
+        stderr: fix_encoding(stderr)
       }
     end
 
     private
+
+    def fix_encoding(text)
+      return nil if text.nil
+      text.force_encoding("ISO-8859-1").encode("UTF-8")
+    rescue => e
+      puts e.message
+      puts e.backtrace
+      "--- failed to encode as UTF-8: #{e.message} ---"
+    end
 
     def invoke_process
       c = cmd
