@@ -64,7 +64,7 @@ module Pipeline::Util
     private
 
     def fix_encoding(text)
-      return nil if text.nil
+      return nil if text.nil?
       text.force_encoding("ISO-8859-1").encode("UTF-8")
     rescue => e
       puts e.message
