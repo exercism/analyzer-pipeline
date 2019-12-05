@@ -32,7 +32,7 @@ module Pipeline::Build
         image: image_name,
         image_tag: image_tag,
         git_tag: build_tag,
-        logs: img.logs.inspect
+        logs: img.logs.inspect.force_encoding("ISO-8859-1").encode("UTF-8")
       }
     end
 
