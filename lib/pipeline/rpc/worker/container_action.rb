@@ -96,10 +96,21 @@ module Pipeline::Rpc::Worker
     def run_container
       log "Invoking container"
       begin
-        @result = @analysis_run.analyze!
+        data = @analysis_run.analyze!
+        if data[:exit_status] != 0
+          @error = {
+            worker_error_code: 513,
+            error: "Container returned exit status of #{data[:exit_status]}"
+          }
+          @error.merge!(data)
+        else
+          @result = data
+        end
       rescue => e
         msg = "Error from container"
         log msg
+        log e
+        puts e.backtrace
         @error = {
           worker_error_code: 513,
           error: msg,

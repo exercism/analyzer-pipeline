@@ -24,10 +24,14 @@ module Pipeline::Util
         puts "HERE: #{@logs}" + @logs.class.to_s
         begin
           run_cmd.call
-          @logs << run_cmd
+        rescue => e
+          puts e.message
+          puts "HERE"
+          puts " --------- "
+          raise
         ensure
+          @logs << run_cmd
           kill_cmd.call
-          @logs << kill_cmd
         end
       end
 

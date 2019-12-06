@@ -21,8 +21,6 @@ module Pipeline::Util
 
     def call
       invoke_process
-
-
       puts "status: #{status}" unless suppress_output
       puts "stdout: #{stdout}" unless suppress_output
       puts "stderr: #{stderr}" unless suppress_output

@@ -30,23 +30,27 @@ module Pipeline::Runtime
 
     def analyze!
       puts "Starting container invocation"
-      container_driver = Pipeline::Util::ContainerDriver.new(runc, img, configurator, solution_dir)
-      @result = container_driver.invoke(working_directory, args)
+      begin
+        container_driver = Pipeline::Util::ContainerDriver.new(runc, img, configurator, solution_dir)
+        @result = container_driver.invoke(working_directory, args)
+      rescue => e
+      end
       puts "Completed invocation"
-      puts @logs.inspect
-      {
+      data = {
         exercise_slug: exercise_slug,
         solution_dir: solution_dir,
         rootfs_source: rootfs_source,
-        result: result,
         invocation: @result.report,
         logs: @logs.inspect,
         exit_status: exit_status
       }
-    rescue => e
-      puts "Exception in analyze: #{e.message}"
-      puts e.backtrace
-      raise
+      begin
+        data[:result] = result if exit_status == 0
+      rescue => e
+        puts "Error reading result"
+        data[:error] = e
+      end
+      data
     end
 
     def working_directory
