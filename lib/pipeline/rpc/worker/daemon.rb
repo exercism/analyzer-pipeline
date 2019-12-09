@@ -68,10 +68,27 @@ module Pipeline::Rpc::Worker
 
     def listen
       connect
+      start_status_publisher
       poll_messages
     end
 
     private
+
+    def start_status_publisher
+      Thread.new do
+        channel_defn = @bootstrap["channel"]
+        response_address = channel_defn["response_address"]
+        workqueue_addresses  = channel_defn["workqueue_addresses"]
+        notifier = context.socket(ZMQ::PUB)
+        notifier.connect(response_address)
+        loop do
+          sleep 2
+          msg = { msg_type: "worker_heartbeat", identity: identity, workqueue_addresses: workqueue_addresses }
+          notifier.send_string(msg.to_json)
+          puts "SENT"
+        end
+      end
+    end
 
     def connect
       channel_defn = @bootstrap["channel"]

@@ -33,11 +33,13 @@ module Pipeline::Rpc
             topic = k
             port = v["queue"]
           end
-          bind_address = "tcp://*:#{port}"
+          bind_address = "tcp://#{@public_hostname}:#{port}"
           work_channel = WorkChannel.new(zmq_context, bind_address)
           backend[topic] = work_channel
         end
       end
+
+      @worker_presence = WorkerPresence.new
 
       load_container_versions!
 
@@ -87,6 +89,10 @@ module Pipeline::Rpc
       elsif msg.type == "heartbeat"
         @in_flight_requests.flush_expired_requests
         emit_current_spec
+      elsif msg.type == "worker_heartbeat"
+        identity = msg.parsed_msg["identity"]
+        queues = msg.parsed_msg["workqueue_addresses"]
+        @worker_presence.mark_seen!(identity, queues)
       else
         puts "Unrecognised message: #{msg.type} #{msg.parsed_msg}"
       end
@@ -188,20 +194,23 @@ module Pipeline::Rpc
     end
 
     def select_backend_and_forward(req, channel)
+      addresses = []
       track_slug = req.parsed_msg["track_slug"]
       backend = channel[track_slug]
-      puts "@@@"
-      puts "HERE #{req.parsed_msg}"
-      puts "@@@"
+      addresses << backend.public_address
       if backend && backend.worker_available?
         forward(backend, req)
         return
       end
       backend = channel["*"]
+      addresses << backend.public_address
       if backend && backend.worker_available?
         forward(backend, req)
       else
-        req.send_error("No workers available for <#{track_slug}>", 503)
+        info = {
+          current_worker_count: @worker_presence.count_for(addresses)
+        }
+        req.send_error("No workers available for <#{track_slug}>", 503, info)
       end
     end
 
