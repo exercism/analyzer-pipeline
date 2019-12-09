@@ -8,9 +8,10 @@ module Pipeline::Rpc
       502 => "Malformed request",
       503 => "No worker available",
       504 => "Request timed out while waiting for response from worker",
+      505 => "Container version not yet deployed",
 
       510 => "Worker error",
-      511 => "Container version is not available",
+      511 => "Container version is not available on worker",
       512 => "Failure in container setup",
       513 => "Failure in container invocation",
       514 => "Output missing or malformed",
@@ -104,6 +105,10 @@ module Pipeline::Rpc
         end
         missing
       end
+    end
+
+    def versioned?
+      parsed_msg.include?("container_version")
     end
 
     def merge_context!(context_to_merge)

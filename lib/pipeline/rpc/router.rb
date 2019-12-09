@@ -162,6 +162,19 @@ module Pipeline::Rpc
         req.send_error("Missing mandatory paraneters", 502, error)
         return
       end
+      if req.versioned?
+        track_slug = req.parsed_msg["track_slug"]
+        container_version = req.parsed_msg["container_version"]
+        puts "CHECK VERSION #{worker_class} #{track_slug} #{container_version}"
+        configured_versions = container_versions[worker_class][track_slug]
+        if configured_versions.nil?
+          req.send_error("No configuration for track_slug <#{track_slug}>", 502)
+          return
+        elsif !configured_versions.include?(container_version)
+          req.send_error("Container <#{track_slug}>:<#{container_version}> is not deployed. Configured versions are: #{configured_versions}", 505)
+          return
+        end
+      end
       channel = select_channel(worker_class)
       if channel.nil?
         req.send_error("worker_class <#{worker_class}> unrecognised", 502)
@@ -177,6 +190,9 @@ module Pipeline::Rpc
     def select_backend_and_forward(req, channel)
       track_slug = req.parsed_msg["track_slug"]
       backend = channel[track_slug]
+      puts "@@@"
+      puts "HERE #{req.parsed_msg}"
+      puts "@@@"
       if backend && backend.worker_available?
         forward(backend, req)
         return
