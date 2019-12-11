@@ -58,7 +58,7 @@ module Pipeline::Rpc
 
     def default_timeout
       return 300 if parsed_msg["action"] == "build_container"
-      return parsed_msg["execution_timeout"].to_i if parsed_msg["execution_timeout"]
+      return 2 + parsed_msg["execution_timeout"].to_i if parsed_msg["execution_timeout"]
       5
     end
 
