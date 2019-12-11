@@ -65,6 +65,7 @@ module Pipeline::Rpc::Worker
       track_dir = environment.track_dir(track_slug, container_version)
       begin
         @analysis_run = setup_container_run(track_dir, @exercise_slug, @job_slug)
+        @analysis_run.execution_timeout = request["execution_timeout"] if request["execution_timeout"]
       rescue => e
         msg = "Failure setting up job"
         log msg

@@ -28,6 +28,10 @@ module Pipeline::Runtime
       yield iteration_folder
     end
 
+    def execution_timeout=(timeout)
+      runc.execution_timeout = timeout
+    end
+
     def analyze!
       puts "Starting container invocation"
       begin

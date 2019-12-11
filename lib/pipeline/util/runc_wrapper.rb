@@ -1,11 +1,12 @@
 module Pipeline::Util
   class RuncWrapper
-    attr_accessor :binary_path, :suppress_output, :memory_limit
+    attr_accessor :binary_path, :suppress_output, :memory_limit, :execution_timeout
 
     def initialize(logs)
       @binary_path = "/opt/container_tools/runc"
       @suppress_output = false
       @memory_limit = 3000000
+      @execution_timeout = 5
       @logs = logs || Pipeline::Util::LogCollector.new
     end
 
@@ -14,7 +15,7 @@ module Pipeline::Util
 
       actual_command = "#{binary_path} --root root-state run #{container_id}"
       run_cmd = ExternalCommand.new("bash -x -c 'ulimit -v #{memory_limit}; #{actual_command}'")
-      run_cmd.timeout = 5
+      run_cmd.timeout = execution_timeout
       run_cmd.stdout_limit = 1024*1024
       run_cmd.stderr_limit = 1024*1024
 
