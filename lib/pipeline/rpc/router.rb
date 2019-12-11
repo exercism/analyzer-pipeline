@@ -197,21 +197,25 @@ module Pipeline::Rpc
       addresses = []
       track_slug = req.parsed_msg["track_slug"]
       backend = channel[track_slug]
-      addresses << backend.public_address
-      if backend && backend.worker_available?
-        forward(backend, req)
-        return
+      if backend
+        addresses << backend.public_address
+        if backend.worker_available?
+          forward(backend, req)
+          return
+        end
       end
       backend = channel["*"]
-      addresses << backend.public_address
-      if backend && backend.worker_available?
-        forward(backend, req)
-      else
-        info = {
-          current_worker_count: @worker_presence.count_for(addresses)
-        }
-        req.send_error("No workers available for <#{track_slug}>", 503, info)
+      if backend
+        addresses << backend.public_address
+        if backend.worker_available?
+          forward(backend, req)
+          return
+        end
       end
+      info = {
+        current_worker_count: @worker_presence.count_for(addresses)
+      }
+      req.send_error("No workers available for <#{track_slug}>", 503, info)
     end
 
     def forward(backend, req)
