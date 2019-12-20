@@ -159,7 +159,7 @@ module Pipeline::Rpc
 
     def current_worker_status
       status = {}
-      container_versions.each do |worker_class, versions|
+      container_versions.each do |worker_class, target_versions|
         channel = select_channel(worker_class)
         addresses = []
         channel.each do |key, backend|
@@ -167,8 +167,13 @@ module Pipeline::Rpc
         end
         workers =  @worker_presence.list_for(addresses)
         deployed_versions = Hash.new {|h,k| h[k] =  Hash.new {|h,k| h[k] = []} }
+        target_versions.each do |version|
+          deployed_versions[lang][version] = []
+        end
+        worker_ids = []
         workers.each do |worker|
           identity = worker[:identity]
+          worker_ids << identity
           worker[:info]["deployed_versions"].each do |lang, versions|
             versions.each do |version|
               deployed_versions[lang][version] << identity
@@ -176,8 +181,7 @@ module Pipeline::Rpc
           end
         end
         status[worker_class] = {
-          target_versions: versions,
-          queue_addresses: addresses,
+          online_workers: worker_ids,
           deployed_versions: deployed_versions
         }
       end
