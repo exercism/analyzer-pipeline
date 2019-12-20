@@ -165,7 +165,7 @@ module Pipeline::Rpc
     def version_check(channel, language_slug)
       puts current_worker_status.keys
       puts channel
-      status = current_worker_status[channel]
+      status = current_worker_status[channel.to_sym]
       worker_count = status[:online_workers].size
       deployed_versions = status[:deployed_versions][language_slug]
       check_status = {}
