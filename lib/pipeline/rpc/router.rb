@@ -149,10 +149,30 @@ module Pipeline::Rpc
           req.send_result({ list_images: images })
         elsif action == "describe_workers"
           req.send_result({ workers_info: @worker_presence.workers_info })
+        elsif action == "current_worker_status"
+          req.send_result({ workers_status: current_worker_status })
         else
           req.send_error("Action <#{action}> unrecognised", 501)
         end
       end
+    end
+
+    def current_worker_status
+      status = {}
+      container_versions.each do |worker_class, versions|
+        channel = select_channel(worker_class)
+        addresses = []
+        channel.each do |key, backend|
+          addresses << backend.public_address
+        end
+        status[worker_class] = {
+          target_versions: versions,
+          channel_keys: channel.keys,
+          queue_addresses: addresses,
+          worker_ids: @worker_presence.list_for(addresses)
+        }
+      end
+      status
     end
 
     def to_aws_credentials(raw_credentials)
