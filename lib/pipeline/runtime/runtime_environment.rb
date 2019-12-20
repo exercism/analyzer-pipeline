@@ -54,7 +54,7 @@ module Pipeline::Runtime
     def list_deployed_containers
       glob_pattern = "#{env_base}/*/*/current"
       Dir.glob(glob_pattern).map do |match|
-        match.gsub(env_base, "").gsub(/current$/, "")
+        match.gsub("#{env_base}/", "").gsub(/\/current$/, "").gsub(/\//, ":")
       end
     end
 
