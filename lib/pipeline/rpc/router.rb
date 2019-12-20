@@ -93,7 +93,7 @@ module Pipeline::Rpc
         identity = msg.parsed_msg["identity"]
         queues = msg.parsed_msg["workqueue_addresses"]
         puts "worker heartbeat #{msg.parsed_msg}"
-        @worker_presence.mark_seen!(identity, queues)
+        @worker_presence.mark_seen!(identity, queues, msg.parsed_msg)
       else
         puts "Unrecognised message: #{msg.type} #{msg.parsed_msg}"
       end
@@ -147,6 +147,8 @@ module Pipeline::Rpc
           container_repo = Pipeline::Runtime::RuntimeEnvironment.container_repo(channel, track_slug, nil)
           images = container_repo.images_info
           req.send_result({ list_images: images })
+        elsif action == "describe_workers"
+          req.send_result({ workers_info: @worker_presence.workers_info })
         else
           req.send_error("Action <#{action}> unrecognised", 501)
         end
