@@ -169,8 +169,10 @@ module Pipeline::Rpc
         deployed_versions = Hash.new {|h,k| h[k] =  Hash.new {|h,k| h[k] = []} }
         workers.each do |worker|
           identity = worker[:identity]
-          worker[:info]["deployed_versions"].each do |lang, version|
-            deployed_versions[lang][version] << identity
+          worker[:info]["deployed_versions"].each do |lang, versions|
+            versions.each do |version|
+              deployed_versions[lang][version] << identity
+            end
           end
         end
         status[worker_class] = {
