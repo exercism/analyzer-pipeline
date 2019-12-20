@@ -83,7 +83,12 @@ module Pipeline::Rpc::Worker
         notifier.connect(response_address)
         loop do
           sleep 2
-          msg = { msg_type: "worker_heartbeat", identity: identity, workqueue_addresses: workqueue_addresses }
+          msg = {
+            msg_type: "worker_heartbeat",
+            identity: identity,
+            workqueue_addresses: workqueue_addresses,
+            deployed_versions: environment.list_deployed_containers
+          }
           notifier.send_string(msg.to_json)
           puts "SENT"
         end
