@@ -25,7 +25,7 @@ module Pipeline::Rpc
     def list_for(queue_addresses)
       workers = []
       queue_addresses.each do |queue_address|
-        @last_seen[queue_address].each do |worker|
+        @last_seen[queue_address].each do |id, worker|
           workers << worker
         end
       end
