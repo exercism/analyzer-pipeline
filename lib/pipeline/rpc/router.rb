@@ -92,6 +92,7 @@ module Pipeline::Rpc
       elsif msg.type == "worker_heartbeat"
         identity = msg.parsed_msg["identity"]
         queues = msg.parsed_msg["workqueue_addresses"]
+        puts "worker heartbeat #{msg.parsed_msg}"
         @worker_presence.mark_seen!(identity, queues)
       else
         puts "Unrecognised message: #{msg.type} #{msg.parsed_msg}"

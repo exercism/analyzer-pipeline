@@ -51,11 +51,10 @@ module Pipeline::Runtime
       release_container(language_slug, version, container_repo)
     end
 
-    def list_deployed_containers(track_slug)
-      track_dir = "#{env_base}/#{track_slug}"
-      glob_pattern = "#{track_dir}/*/current"
+    def list_deployed_containers
+      glob_pattern = "#{env_base}/*/*/current"
       Dir.glob(glob_pattern).map do |match|
-        match.gsub(track_dir, "").gsub(/current$/, "")
+        match.gsub(env_base, "").gsub(/current$/, "")
       end
     end
 
