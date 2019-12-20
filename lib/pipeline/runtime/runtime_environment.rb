@@ -56,7 +56,7 @@ module Pipeline::Runtime
       versions = {}
       Dir.glob(glob_pattern).map do |match|
         folder = match.gsub("#{env_base}/", "").gsub(/\/current$/, "")
-        track_slug,version = folder.split(":")
+        track_slug,version = folder.split("/")
         versions[track_slug] = version
       end
       versions
