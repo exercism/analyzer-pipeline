@@ -165,11 +165,11 @@ module Pipeline::Rpc
         channel.each do |key, backend|
           addresses << backend.public_address
         end
+        workers =  @worker_presence.list_for(addresses)
         status[worker_class] = {
           target_versions: versions,
-          channel_keys: channel.keys,
           queue_addresses: addresses,
-          worker_ids: @worker_presence.list_for(addresses)
+          workers: workers
         }
       end
       status

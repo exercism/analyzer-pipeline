@@ -9,6 +9,7 @@ module Pipeline::Rpc
     def mark_seen!(identity, connected_queues, worker_info)
       connected_queues.each do |queue_address|
         @last_seen[queue_address][identity] = {
+          identity: identity,
           last_seen: Time.now.to_i,
           info: worker_info
         }
@@ -24,9 +25,11 @@ module Pipeline::Rpc
     def list_for(queue_addresses)
       workers = []
       queue_addresses.each do |queue_address|
-        workers += @last_seen[queue_address].keys
+        @last_seen[queue_address].each do |worker|
+          workers << worker
+        end
       end
-      workers.uniq
+      workers.uniq { |w| w[:identity] }
     end
 
     def count_for(queue_addresses)
