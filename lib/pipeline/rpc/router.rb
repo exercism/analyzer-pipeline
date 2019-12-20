@@ -151,10 +151,26 @@ module Pipeline::Rpc
           req.send_result({ workers_info: @worker_presence.workers_info })
         elsif action == "current_worker_status"
           req.send_result({ workers_status: current_worker_status })
+        elsif action == "deployment_check"
+          channel = req.parsed_msg["channel"]
+          language_slug = req.parsed_msg["track_slug"]
+          status = { status: version_check(channel, language_slug) }
+          req.send_result(status)
         else
           req.send_error("Action <#{action}> unrecognised", 501)
         end
       end
+    end
+
+    def version_check(channel, language_slug)
+      status = current_worker_status[channel]
+      worker_count = status[:online_workers].size
+      deployed_versions = status[:deployed_versions][language_slug]
+      check_status = {}
+      deployed_versions.map do |version, workers|
+        check_status[version] = workers.count >= worker_count
+      end
+      check_status
     end
 
     def current_worker_status
