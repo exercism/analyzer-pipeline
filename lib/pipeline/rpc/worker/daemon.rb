@@ -85,6 +85,8 @@ module Pipeline::Rpc::Worker
           sleep 2
           msg = {
             msg_type: "worker_heartbeat",
+            channel: @channel,
+            topics: @topics,
             identity: identity,
             workqueue_addresses: workqueue_addresses,
             deployed_versions: environment.list_deployed_containers
