@@ -166,10 +166,17 @@ module Pipeline::Rpc
           addresses << backend.public_address
         end
         workers =  @worker_presence.list_for(addresses)
+        deployed_versions = Hash.new {|h,k| h[k] =  Hash.new {|h,k| h[k] = []} }
+        workers.each do |worker|
+          identity = worker["identity"]
+          worker["info"]["deployed_versions"].each do |lang, version|
+            deployed_versions[lang][version] << identity
+          end
+        end
         status[worker_class] = {
           target_versions: versions,
           queue_addresses: addresses,
-          workers: workers
+          deployed_versions: deployed_versions
         }
       end
       status
