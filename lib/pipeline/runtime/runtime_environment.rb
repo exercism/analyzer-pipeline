@@ -53,11 +53,11 @@ module Pipeline::Runtime
 
     def list_deployed_containers
       glob_pattern = "#{env_base}/*/*/current"
-      versions = {}
+      versions = Hash.new {|h,k| h[k] = [] }
       Dir.glob(glob_pattern).map do |match|
         folder = match.gsub("#{env_base}/", "").gsub(/\/current$/, "")
         track_slug,version = folder.split("/")
-        versions[track_slug] = version
+        versions[track_slug] << version
       end
       versions
     end
