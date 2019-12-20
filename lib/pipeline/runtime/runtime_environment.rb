@@ -53,9 +53,13 @@ module Pipeline::Runtime
 
     def list_deployed_containers
       glob_pattern = "#{env_base}/*/*/current"
+      versions = {}
       Dir.glob(glob_pattern).map do |match|
-        match.gsub("#{env_base}/", "").gsub(/\/current$/, "").gsub(/\//, ":")
+        folder = match.gsub("#{env_base}/", "").gsub(/\/current$/, "")
+        track_slug,version = folder.split(":")
+        versions[track_slug] = version
       end
+      versions
     end
 
     def release_container(track_slug, version, container_repo)
