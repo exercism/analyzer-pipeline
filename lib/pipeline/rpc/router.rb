@@ -168,9 +168,8 @@ module Pipeline::Rpc
         workers =  @worker_presence.list_for(addresses)
         deployed_versions = Hash.new {|h,k| h[k] =  Hash.new {|h,k| h[k] = []} }
         workers.each do |worker|
-          puts worker
           identity = worker[:identity]
-          worker[:info][:deployed_versions].each do |lang, version|
+          worker[:info]["deployed_versions"].each do |lang, version|
             deployed_versions[lang][version] << identity
           end
         end
