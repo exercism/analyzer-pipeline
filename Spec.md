@@ -43,7 +43,7 @@ Addtionally addition context may be returned
 
 For errored requests, the status hash may include additional structured information about the error (both in the status `error` field and also detailed within `context` .
 
-e.g. 
+e.g.
 
 ```json
 {
@@ -59,7 +59,7 @@ e.g.
 }
 ```
 
-## Status codes 
+## Status codes
 
 Codes have been chosen to follow HTTP style ranges but fall into 4 broad classes
 
@@ -69,18 +69,22 @@ The platform client (PipelineClient) is currently configured to retry on failure
 
 503 and 504 can be retried with an appropriate backoff
 
- - 500 generic platform error, ideally not used. 
+ - 500 generic platform error, ideally not used.
  - 501 unrecognised action (platform didn't recognise action type)
  - 502 malformed request (message will contain detail)
  - 503 no worker available (there is no worker - either generic or scoped - available to serve your request)
  - 504 request timed out while waiting for a worker to complete
+ - 505 Container version not yet deployed - the requested version of the container hasn't been registered as a deployment target
 
 ### Class II - Platform worker errors
 
 Unless there is a deployment in progress, it is unlikely that any of these codes will benefit from retry. Two possible exceptions are 512 (which might be due to a recoverable network glitch) and 511 if (and only if) the targeted version is known to have been recently released.
 
  - 510 generic worker error, ideally unused, but context will be provided in message and potentially in logging
- - 511 container_version unavailable - the requested language:version pair isn't deployed. It may be in future
+ - 511 container_version unavailable -
+     the requested language:version pair isn't deployed. Because this isn't a 505, the router thinks that
+     it should be deployed onto a worker, therefore it's reasonable to assume that it maybe in the future
+     and retry.
  - 512 failure in container setup (container not spawned, maybe we're out of disk or s3 transfer failed)
  - 513 failure in container invocation (container exited with non zero code)
  - 514 output missing (container exited with a zero exit - so successfully - but the expected output was not written)
@@ -98,7 +102,7 @@ It is expected that all 4xx error codes are context independent. Repeated submis
 ### Class IV - successful container run
 
  - 200 ok, successful invocation. There is a value in 'response', it may indicate a successful or failed or errored test run, but the platform considers the test_runner as having completed its work correctly. Data in response is ready for returning to upstream systems.
- 
+
 ### Class V - Consumer errors
 
 These errors are not sent back by the platform, but are instead are errors if the response from the platform cannot be processed.
