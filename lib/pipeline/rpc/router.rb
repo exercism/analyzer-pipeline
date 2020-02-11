@@ -204,13 +204,14 @@ module Pipeline::Rpc
             end
           end
         end
-        workers_by_lang = { "_" => worker_ids }
+        workers_by_lang = { }
         deployed_versions.each do |lang,_|
           wildcard_workers = workers_by_topic["*"]
           specific_workers = workers_by_topic[lang]
           workers_by_lang[lang] = wildcard_workers + specific_workers
         end
         status[worker_class] = {
+          present_workers: worker_ids,
           online_workers: workers_by_lang,
           deployed_versions: deployed_versions
         }
