@@ -191,9 +191,13 @@ module Pipeline::Rpc
           end
         end
         worker_ids = []
+        workers_by_topic = Hash.new {|h,k| h[k] = []}
         workers.each do |worker|
           identity = worker[:identity]
           worker_ids << identity
+          worker[:info]["topics"].each do |topic|
+            workers_by_topic[topic] << worker
+          end
           worker[:info]["deployed_versions"].each do |lang, versions|
             versions.each do |version|
               deployed_versions[lang][version] << identity
@@ -201,7 +205,7 @@ module Pipeline::Rpc
           end
         end
         status[worker_class] = {
-          _workers: workers,
+          _workers_by_topic: workers_by_topic,
           online_workers: worker_ids,
           deployed_versions: deployed_versions
         }
