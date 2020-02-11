@@ -196,7 +196,7 @@ module Pipeline::Rpc
           identity = worker[:identity]
           worker_ids << identity
           worker[:info]["topics"].each do |topic|
-            workers_by_topic[topic] << worker
+            workers_by_topic[topic] << identity
           end
           worker[:info]["deployed_versions"].each do |lang, versions|
             versions.each do |version|
@@ -204,15 +204,14 @@ module Pipeline::Rpc
             end
           end
         end
-        workers_by_lang = {}
+        workers_by_lang = { "_" => worker_ids }
         deployed_versions.each do |lang,_|
           wildcard_workers = workers_by_topic["*"]
           specific_workers = workers_by_topic[lang]
           workers_by_lang[lang] = wildcard_workers + specific_workers
         end
         status[worker_class] = {
-          _workers_by_lang: workers_by_lang,
-          online_workers: worker_ids,
+          online_workers: workers_by_lang,
           deployed_versions: deployed_versions
         }
       end
