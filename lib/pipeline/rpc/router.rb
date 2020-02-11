@@ -166,7 +166,7 @@ module Pipeline::Rpc
       puts current_worker_status.keys
       puts channel
       status = current_worker_status[channel.to_sym]
-      worker_count = status[:online_workers].size
+      worker_count = status[:online_workers][language_slug].size
       deployed_versions = status[:deployed_versions][language_slug]
       check_status = {}
       deployed_versions.map do |version, workers|
