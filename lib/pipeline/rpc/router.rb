@@ -201,6 +201,7 @@ module Pipeline::Rpc
           end
         end
         status[worker_class] = {
+          _workers: workers,
           online_workers: worker_ids,
           deployed_versions: deployed_versions
         }
